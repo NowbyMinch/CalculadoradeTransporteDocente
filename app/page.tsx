@@ -1,0 +1,261 @@
+"use client";
+import { Calendar, DatePicker } from "@/components/DatePicker";
+import Image from "next/image";
+import { useState } from "react";
+import { motion, scale } from "framer-motion";
+import { BusFront, TrainFront, TramFront } from "lucide-react";
+
+const days = [
+  "domingo",
+  "segunda",
+  "terça",
+  "quarta",
+  "quinta",
+  "sexta",
+  "sabado",
+];
+const daysInitial = {
+  domingo: false,
+  segunda: false,
+  terça: false,
+  quarta: false,
+  quinta: false,
+  sexta: false,
+  sabado: false,
+};
+
+export default function Home() {
+  const [inicio, setInicio] = useState("");
+  const [week, setWeek] = useState(daysInitial);
+  const [bus, setBus] = useState(false);
+  const [train, setTrain] = useState(false);
+  const [tram, setTram] = useState(false);
+
+  return (
+    <>
+      <header className="w-full min-h-18 bg-white shadow-md"></header>
+
+      <div className="h-full w-full flex flex-col justify-center items-center ">
+        {/* -------------------------------------------- */}
+        <div className=" max-h-[95%] max-w-[95%] h-165 md:flex-row flex flex-col justify-center items-center md:gap-4">
+          <div className="w-110 max-h-full h-full bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
+            <div className="flex flex-col gap-8">
+              <div className="">
+                <h1 className="text-[26px] font-semibold text-[rgba(215,171,42,1)]">
+                  Se planeje mais rápido!
+                </h1>
+                <p className="text-black">
+                  Simule o pagamento de seus funcionários de forma simples e
+                  descomplicada
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                  Período escolar
+                </label>
+                <div className="flex justify-between">
+                  <div className="">
+                    <label>Início</label>
+                    <DatePicker onChange={setInicio} />
+                  </div>
+                  <div className="">
+                    <label>Fim</label>
+                    <DatePicker onChange={setInicio} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                  Dias da semana
+                </label>
+                <div className="flex gap-1 justify-between">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <motion.button
+                      key={i}
+                      initial={{ scale: 1 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        setWeek((prev) => ({
+                          ...prev,
+                          [days[i]]: !prev[days[i] as keyof typeof daysInitial],
+                        }));
+                        console.log(week);
+                      }}
+                      style={{
+                        backgroundColor: week[
+                          days[i] as keyof typeof daysInitial
+                        ]
+                          ? "rgba(255,208,69,1)"
+                          : "rgba(217,217,217,1)",
+                      }}
+                      className="w-10 h-10  cursor-pointer rounded-full text-black "
+                    >
+                      {days[i].slice(0, 1).toUpperCase()}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                  Selecione os transportes que se aplicam:
+                </label>
+
+                <div className=" flex gap-3">
+                  <motion.button
+                    initial={{ scale: 1, width: bus ? "120px" : "52px" }}
+                    whileHover={{ scale: 1.02, width: "120px" }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      backgroundColor: bus
+                        ? "rgba(255, 208, 69, 1)"
+                        : "rgba(217,217,217,1)",
+                    }}
+                    onClick={() => {
+                      setBus(!bus);
+                    }}
+                    className={`h-13 rounded-[10px] cursor-pointer flex gap-1 items-center p-3 overflow-hidden ${bus ? "w-120px" : "w-13"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <BusFront className="size-7" />
+                      <span className="">Ônibus</span>
+                    </div>
+                  </motion.button>
+                  <motion.button
+                    initial={{ scale: 1, width: train ? "120px" : "52px" }}
+                    whileHover={{ scale: 1.02, width: "120px" }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      backgroundColor: train
+                        ? "rgba(255, 208, 69, 1)"
+                        : "rgba(217,217,217,1)",
+                    }}
+                    onClick={() => {
+                      setTrain(!train);
+                    }}
+                    className={`h-13 rounded-[10px] cursor-pointer flex gap-1 items-center p-3 overflow-hidden ${train ? "w-120px" : "w-13"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <TrainFront className="size-7" />
+                      <span className="">Trem</span>
+                    </div>
+                  </motion.button>
+                  <motion.button
+                    initial={{ scale: 1, width: tram ? "120px" : "52px" }}
+                    whileHover={{ scale: 1.02, width: "120px" }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      backgroundColor: tram
+                        ? "rgba(255, 208, 69, 1)"
+                        : "rgba(217,217,217,1)",
+                    }}
+                    onClick={() => {
+                      setTram(!tram);
+                    }}
+                    className={`h-13 rounded-[10px] cursor-pointer flex gap-1 items-center p-3 overflow-hidden ${tram ? "w-120px" : "w-13"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <TramFront className="size-7" />
+                      <span className="">Metrô</span>
+                    </div>
+                  </motion.button>
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="flex flex-col gap-2 ">
+                  <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                    Passagens
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Quantidade"
+                    className="border-gray-400 max-w-44 relative cursor-text p-2.5 h-12 gap-1 text-[16px] flex w-full rounded-[15px] border"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                    Valor unitário
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Valor em R$"
+                    className="border-gray-400 max-w-44 relative cursor-text p-2.5 h-12 gap-1 text-[16px] flex w-full rounded-[15px] border"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-220 max-h-full h-full flex flex-col gap-4 max-w-full">
+            <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#f0c15b] rounded-2xl shadow-lg">
+              <span className="">Pagamento estimado anual</span>
+              <h1 className="font-bold text-[35px]">R$ 18.720,00</h1>
+            </div>
+            <div className="bg-white rounded-2xl w-full h-full flex flex-col shadow-lg p-5 gap-5">
+              <div className="">
+                <div className="flex justify-between">
+                  <h1 className="text-[26px] font-semibold text-[rgba(215,171,42,1)]">
+                    Calendário
+                  </h1>
+                  <button className="w-fit h-fit p-2 rounded-[10px] border border-[rgba(0,0,0,0.18)] bg-[rgba(244,244,244,1)]">Rio de Janeiro, RJ</button>
+                </div>
+                <span className="text-black">Total de dias: 88</span>
+                <span className="text-black mx-2">|</span>
+                <span className="text-black">Trabalhados: 80</span>
+                <span className="text-black mx-2">|</span>
+                <span className="text-black">Feriados: 8</span>
+              </div>
+
+              <div className="flex gap-7 w-full h-full ">
+                <div className="min-w-110 h-full flex flex-col justify-between rounded-2xl ">
+                  <Calendar onChange={() => {}} />
+                  <div className="">
+                    {/* <button>a</button>
+                    <button>b</button>
+                    <button>c</button> */}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full ">
+                  <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                    Feriados:
+                  </label>
+                  <div className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3">
+                    <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
+                      11
+                    </div>
+                    <span>Feriado teste template</span>
+                  </div>
+                  <div className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3">
+                    <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
+                      11
+                    </div>
+                    <span>Feriado teste template</span>
+                  </div>
+                  <div className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3">
+                    <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
+                      11
+                    </div>
+                    <span>Feriado teste template</span>
+                  </div>
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full font-semibold cursor-pointer"
+                  >
+                    Ver mais...
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
