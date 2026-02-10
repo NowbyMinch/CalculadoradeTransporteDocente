@@ -84,7 +84,7 @@ export default function Home() {
 
       <div className="h-full w-full flex flex-col justify-center items-center ">
         {/* -------------------------------------------- */}
-        <div className=" max-h-[95%] max-w-[95%] h-165 md:flex-row flex flex-col justify-center items-center md:gap-4">
+        <div className=" max-h-[95%] max-w-[95%] h-175 md:flex-row flex flex-col justify-center items-center md:gap-4">
           <div className="w-110 max-h-full h-full bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
             <div className="flex flex-col gap-8">
               <div className="">
@@ -132,8 +132,7 @@ export default function Home() {
                         console.log(week);
                       }}
                       style={{
-                        backgroundColor: week[
-                          days[i]]
+                        backgroundColor: week[days[i]]
                           ? "rgba(255,208,69,1)"
                           : "rgba(217,217,217,1)",
                       }}
@@ -235,6 +234,15 @@ export default function Home() {
                   />
                 </div>
               </div>
+
+              <motion.button
+                initial={{ scale: 1 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="py-3 px-4 cursor-pointer rounded-2xl w-fit bg-[#f0c15b] font-semibold self-center"
+              >
+                Calcular
+              </motion.button>
             </div>
           </div>
 
