@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { motion, scale } from "framer-motion";
 import { BusFront, ChevronDown, TrainFront, TramFront } from "lucide-react";
 import { eachDayOfInterval, isMonday } from "date-fns";
+import { NumericFormat } from "react-number-format";
 
 const days = [
   "domingo",
@@ -40,6 +41,7 @@ const dayToNumber: Record<Day, number> = {
 export default function Home() {
   const [inicio, setInicio] = useState<Date>();
   const [fim, setFim] = useState<Date>();
+  const [valor, setValor] = useState("");
   const [week, setWeek] = useState(selected);
   const [bus, setBus] = useState(false);
   const [train, setTrain] = useState(false);
@@ -227,10 +229,20 @@ export default function Home() {
                   <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
                     Valor unitário
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Valor em R$"
+                  <NumericFormat
                     className="border-gray-400 max-w-44 relative cursor-text p-2.5 h-12 gap-1 text-[16px] flex w-full rounded-[15px] border"
+                    value={valor}
+                    prefix="R$ "
+                    placeholder="R$ 0,00"
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={2}
+                    fixedDecimalScale
+                    onValueChange={(values) => {
+                      const { formattedValue, value } = values;
+                      setValor(formattedValue); // Valor formatado: "R$ 1.234,56"
+                      console.log(value); // Valor numérico: "1234.56"
+                    }}
                   />
                 </div>
               </div>
