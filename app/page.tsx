@@ -1,9 +1,9 @@
 "use client";
 import { Calendar, DatePicker } from "@/components/DatePicker";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, scale } from "framer-motion";
-import { BusFront, TrainFront, TramFront } from "lucide-react";
+import { BusFront, ChevronDown, TrainFront, TramFront } from "lucide-react";
 
 const days = [
   "domingo",
@@ -30,6 +30,32 @@ export default function Home() {
   const [bus, setBus] = useState(false);
   const [train, setTrain] = useState(false);
   const [tram, setTram] = useState(false);
+  const [feriados, setFeriados] = useState<
+    Array<{ date: string; name: string }>
+  >([]);
+
+  useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await fetch(
+          `https://brasilapi.com.br/api/feriados/v1/${new Date().getFullYear()}`,
+        );
+
+        if (!res.ok) {
+          console.error("Erro HTTP:", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        console.log(data);
+        setFeriados(data);
+      } catch (err) {
+        console.error("Erro ao buscar feriados:", err);
+      }
+    };
+
+    buscar();
+  }, []);
 
   return (
     <>
@@ -201,7 +227,16 @@ export default function Home() {
                   <h1 className="text-[26px] font-semibold text-[rgba(215,171,42,1)]">
                     Calendário
                   </h1>
-                  <button className="w-fit h-fit p-2 rounded-[10px] border border-[rgba(0,0,0,0.18)] bg-[rgba(244,244,244,1)]">Rio de Janeiro, RJ</button>
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="
+                    flex gap-1 cursor-pointer w-fit h-fit p-2 rounded-[10px] border border-[rgba(0,0,0,0.18)] bg-[rgba(244,244,244,1)]"
+                  >
+                    Rio de Janeiro, RJ
+                    <ChevronDown className="text-gray-500" />
+                  </motion.button>
                 </div>
                 <span className="text-black">Total de dias: 88</span>
                 <span className="text-black mx-2">|</span>
@@ -224,24 +259,22 @@ export default function Home() {
                   <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
                     Feriados:
                   </label>
-                  <div className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3">
-                    <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
-                      11
-                    </div>
-                    <span>Feriado teste template</span>
-                  </div>
-                  <div className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3">
-                    <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
-                      11
-                    </div>
-                    <span>Feriado teste template</span>
-                  </div>
-                  <div className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3">
-                    <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
-                      11
-                    </div>
-                    <span>Feriado teste template</span>
-                  </div>
+                  {feriados.map((feriado, i) => {
+                    console.log(feriado);
+                    if (i < 3) {
+                      return (
+                        <div
+                          key={i}
+                          className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                        >
+                          <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
+                            11
+                          </div>
+                          <span>Feriado teste template</span>
+                        </div>
+                      );
+                    }
+                  })}
                   <motion.button
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.05 }}

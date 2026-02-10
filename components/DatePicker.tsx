@@ -17,11 +17,14 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
 import { usePathname } from "next/navigation";
+import { ptBR } from "date-fns/locale";
 
 type DatePickerProps = {
   onChangePreset?: (date: string) => void; // formato "YYYY-MM-DD"
   onChange: (date: string) => void; // formato "YYYY-MM-DD"
 };
+
+const feriados = [];
 
 export function DatePicker({ onChangePreset, onChange }: DatePickerProps) {
   const pathname = usePathname();
@@ -539,6 +542,31 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
     }
   }, [inputValue, inputValue2, inputValue3, onChange]);
 
+  const [feriados, setFeriados] = useState<
+    Array<{ date: string; name: string }>
+  >([]);
+  useEffect(() => {
+    const buscar = async () => {
+      try {
+        const res = await fetch(
+          `https://brasilapi.com.br/api/feriados/v1/${new Date().getFullYear()}`,
+        );
+
+        if (!res.ok) {
+          console.error("Erro HTTP:", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        console.log(data);
+        setFeriados(data);
+      } catch (err) {
+        console.error("Erro ao buscar feriados:", err);
+      }
+    };
+
+    buscar();
+  }, []);
   return (
     <div className="relative max-w-120">
       <motion.div
@@ -579,13 +607,17 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
             {generateCalendar().map((day, i) => {
               const isSelected = selectedDate && isSameDay(day, selectedDate);
               const inCurrentMonth = isSameMonth(day, calendarMonth);
+              const isDay = feriados.filter(el => el.date === day.toISOString().split("T")[0]).length > 0 ? true : false;
+              
+
               return (
                 <button
                   type="button"
                   key={i}
                   // onClick={() => handleDateSelect(day)}
+                  onClick={() => console.log(day.toISOString())}
                   className={`rounded-md p-1 cursor-pointer text-center transition text-[18px] ${
-                    isSelected
+                    isDay
                       ? "bg-yellow-400 text-black font-medium"
                       : inCurrentMonth
                         ? "hover:bg-[rgba(255,238,88,0.1)]"
