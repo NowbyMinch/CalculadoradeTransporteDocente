@@ -28,14 +28,10 @@ const selected: Record<Day, boolean> = {
   sabado: false,
 };
 
-const dayToNumber: Record<Day, number> = {
-  domingo: 0,
-  segunda: 1,
-  terça: 2,
-  quarta: 3,
-  quinta: 4,
-  sexta: 5,
-  sabado: 6,
+type Feriado = {
+  date: string; // YYYY-MM-DD
+  name: string;
+  type: string;
 };
 
 export default function Home() {
@@ -46,14 +42,38 @@ export default function Home() {
   const [bus, setBus] = useState(false);
   const [train, setTrain] = useState(false);
   const [tram, setTram] = useState(false);
-  const [feriados, setFeriados] = useState<
-    Array<{ date: string; name: string }>
-  >([]);
+  const [feriados, setFeriados] = useState<Array<Feriado>>([]);
 
-  const segundas = eachDayOfInterval({
-    start: new Date("2024-01-01"),
-    end: new Date("2024-01-31"),
-  }).filter((date) => isMonday(date)).length;
+  function contarDiasSelecionadosSemFeriados(
+    inicio: Date,
+    fim: Date,
+    week: Record<Day, boolean>,
+    feriados: Feriado[],
+  ) {
+    const feriadosSet = new Set(feriados.map((f) => f.date));
+    let total = 0;
+
+    const dataAtual = new Date(inicio);
+
+    while (dataAtual <= fim) {
+      const dataISO = dataAtual.toISOString().split("T")[0];
+
+      const diaIndex = dataAtual.getDay(); // 0 a 6
+      const diaNome = days[diaIndex]; // "segunda", "terça", etc
+
+      const trabalhaNesseDia = week[diaNome];
+      const ehFeriado = feriadosSet.has(dataISO);
+
+      if (trabalhaNesseDia && !ehFeriado) {
+        total++;
+      }
+
+      dataAtual.setDate(dataAtual.getDate() + 1);
+    }
+
+    console.log("Total dias trabalhados:", total);
+    return total;
+  }
 
   useEffect(() => {
     const buscar = async () => {
@@ -110,7 +130,7 @@ export default function Home() {
                   </div>
                   <div className="">
                     <label>Fim</label>
-                    <DatePicker onChange={setInicio} />
+                    <DatePicker onChange={setFim} />
                   </div>
                 </div>
               </div>
@@ -251,6 +271,19 @@ export default function Home() {
                 initial={{ scale: 1 }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  console.log(inicio);
+                  console.log(fim);
+                  if (inicio && fim) {
+                    console.log("Hi");
+                    contarDiasSelecionadosSemFeriados(
+                      inicio,
+                      fim,
+                      week,
+                      feriados,
+                    );
+                  }
+                }}
                 className="py-3 px-4 cursor-pointer rounded-2xl w-fit bg-[#f0c15b] font-semibold self-center"
               >
                 Calcular
