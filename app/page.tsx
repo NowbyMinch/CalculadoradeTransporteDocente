@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, scale } from "framer-motion";
 import { BusFront, ChevronDown, TrainFront, TramFront } from "lucide-react";
+import { eachDayOfInterval, isMonday } from "date-fns";
 
 const days = [
   "domingo",
@@ -14,7 +15,9 @@ const days = [
   "sexta",
   "sabado",
 ];
-const daysInitial = {
+type Day = (typeof days)[number];
+
+const selected: Record<Day, boolean> = {
   domingo: false,
   segunda: false,
   terça: false,
@@ -24,15 +27,31 @@ const daysInitial = {
   sabado: false,
 };
 
+const dayToNumber: Record<Day, number> = {
+  domingo: 0,
+  segunda: 1,
+  terça: 2,
+  quarta: 3,
+  quinta: 4,
+  sexta: 5,
+  sabado: 6,
+};
+
 export default function Home() {
-  const [inicio, setInicio] = useState("");
-  const [week, setWeek] = useState(daysInitial);
+  const [inicio, setInicio] = useState<Date>();
+  const [fim, setFim] = useState<Date>();
+  const [week, setWeek] = useState(selected);
   const [bus, setBus] = useState(false);
   const [train, setTrain] = useState(false);
   const [tram, setTram] = useState(false);
   const [feriados, setFeriados] = useState<
     Array<{ date: string; name: string }>
   >([]);
+
+  const segundas = eachDayOfInterval({
+    start: new Date("2024-01-01"),
+    end: new Date("2024-01-31"),
+  }).filter((date) => isMonday(date)).length;
 
   useEffect(() => {
     const buscar = async () => {
@@ -56,7 +75,9 @@ export default function Home() {
 
     buscar();
   }, []);
-
+  useEffect(() => {
+    console.log(inicio);
+  }, [inicio]);
   return (
     <>
       <header className="w-full min-h-18 bg-white shadow-md"></header>
@@ -106,14 +127,13 @@ export default function Home() {
                       onClick={(e) => {
                         setWeek((prev) => ({
                           ...prev,
-                          [days[i]]: !prev[days[i] as keyof typeof daysInitial],
+                          [days[i]]: !prev[days[i]],
                         }));
                         console.log(week);
                       }}
                       style={{
                         backgroundColor: week[
-                          days[i] as keyof typeof daysInitial
-                        ]
+                          days[i]]
                           ? "rgba(255,208,69,1)"
                           : "rgba(217,217,217,1)",
                       }}
@@ -196,7 +216,9 @@ export default function Home() {
                     Passagens
                   </label>
                   <input
-                    type="text"
+                    type="Number"
+                    min={0}
+                    inputMode="numeric"
                     placeholder="Quantidade"
                     className="border-gray-400 max-w-44 relative cursor-text p-2.5 h-12 gap-1 text-[16px] flex w-full rounded-[15px] border"
                   />
@@ -260,7 +282,6 @@ export default function Home() {
                     Feriados:
                   </label>
                   {feriados.map((feriado, i) => {
-                    console.log(feriado);
                     if (i < 3) {
                       return (
                         <div
@@ -268,9 +289,9 @@ export default function Home() {
                           className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
                         >
                           <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
-                            11
+                            {feriado.date.split("-")[1]}
                           </div>
-                          <span>Feriado teste template</span>
+                          <span>{feriado.name}</span>
                         </div>
                       );
                     }

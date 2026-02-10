@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 
 type DatePickerProps = {
   onChangePreset?: (date: string) => void; // formato "YYYY-MM-DD"
-  onChange: (date: string) => void; // formato "YYYY-MM-DD"
+  onChange: (date: Date) => void; // formato "YYYY-MM-DD"
 };
 
 const feriados = [];
@@ -158,7 +158,7 @@ export function DatePicker({ onChangePreset, onChange }: DatePickerProps) {
     setInputValue3(formatted.slice(6, 10));
     setCalendarMonth(date);
     setShowPicker(false);
-    onChange(date.toISOString().split("T")[0]); // mantém "YYYY-MM-DD"
+    onChange(date); // mantém "YYYY-MM-DD"
   };
 
   const generateCalendar = () => {
@@ -189,7 +189,7 @@ export function DatePicker({ onChangePreset, onChange }: DatePickerProps) {
       if (isValid(typedDate)) {
         setCalendarMonth(typedDate);
         setSelectedDate(typedDate);
-        onChange(typedDate.toISOString().split("T")[0]);
+        onChange(typedDate);
       }
     }
   }, [inputValue, inputValue2, inputValue3, onChange]);
@@ -506,7 +506,7 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
     setInputValue3(formatted.slice(6, 10));
     setCalendarMonth(date);
     setShowPicker(false);
-    onChange(date.toISOString().split("T")[0]); // mantém "YYYY-MM-DD"
+    onChange(date); // mantém "YYYY-MM-DD"
   };
 
   const generateCalendar = () => {
@@ -537,7 +537,7 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
       if (isValid(typedDate)) {
         setCalendarMonth(typedDate);
         setSelectedDate(typedDate);
-        onChange(typedDate.toISOString().split("T")[0]);
+        onChange(typedDate);
       }
     }
   }, [inputValue, inputValue2, inputValue3, onChange]);
@@ -545,6 +545,7 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
   const [feriados, setFeriados] = useState<
     Array<{ date: string; name: string }>
   >([]);
+  
   useEffect(() => {
     const buscar = async () => {
       try {
@@ -567,6 +568,7 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
 
     buscar();
   }, []);
+
   return (
     <div className="relative max-w-120">
       <motion.div
