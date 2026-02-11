@@ -3,7 +3,7 @@ import { Calendar, DatePicker } from "@/components/DatePicker";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, scale } from "framer-motion";
-import { BusFront, ChevronDown, TrainFront, TramFront } from "lucide-react";
+import { BusFront, ChevronDown, TrainFront, TramFront, X } from "lucide-react";
 import { eachDayOfInterval, isMonday } from "date-fns";
 import { NumericFormat } from "react-number-format";
 import { style } from "framer-motion/client";
@@ -49,6 +49,7 @@ export default function Home() {
   const [train, setTrain] = useState(false);
   const [tram, setTram] = useState(false);
   const [feriados, setFeriados] = useState<Array<Feriado>>([]);
+  const [verMais, setVerMais] = useState(false);
 
   function calcularPreco(
     passagem: number,
@@ -133,9 +134,51 @@ export default function Home() {
 
   return (
     <>
-      {/* <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 ">
-        <div className="absolute w-screen h-screen left-0 bottom-0 "></div>
-      </div> */}
+      {verMais && (
+        <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex">
+          <div className="flex flex-col m-auto z-900 rounded-4xl w-120 h-120 max-h-120 overflow-hidden">
+          <div className=" flex flex-col gap-2 px-3 pt-3 overflow-y-auto custom-scroll w-full h-full bg-white rounded-4xl ">
+            <X
+              onClick={() => {
+                setVerMais(!verMais);
+              }}
+              className="ml-auto min-h-fit size-7 cursor-pointer"
+            />
+            {feriados.map((feriado, i) => {
+              if (
+                inicio &&
+                fim &&
+                new Date(feriado.date) >= inicio &&
+                new Date(feriado.date) <= fim
+              ) {
+                return (
+                  <div
+                    key={i}
+                    className="flex w-full min-h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                  >
+                    <div className="w-15 h-full flex justify-center items-center  ">
+                      <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
+                        {feriado.date.split("-")[2]}
+                      </div>
+                      <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
+                    </div>
+
+                    <span className="line-clamp-2 ">{feriado.name}</span>
+                  </div>
+                );
+              }
+            })}
+          </div>
+
+          </div>
+          <div
+            onClick={() => {
+              setVerMais(!verMais);
+            }}
+            className="absolute w-screen h-screen left-0 bottom-0 "
+          ></div>
+        </div>
+      )}
 
       <header className="w-full min-h-18 bg-white shadow-md">
         <h1 className="font-bold text-[28px] flex items-center p-3 text-[#f0c15b]">
@@ -424,6 +467,9 @@ export default function Home() {
                           initial={{ scale: 1 }}
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.978 }}
+                          onClick={() => {
+                            setVerMais(true);
+                          }}
                           className="cursor-pointer font-semibold self-center mt-1"
                         >
                           ver mais
