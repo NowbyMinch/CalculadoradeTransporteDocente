@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full w-full ${readexPro.variable} font-readex`}>
+    <html lang="en" className={`h-screen w-screen overflow-hidden ${readexPro.variable} font-readex`}>
       <body
         className={`bg-[#EAEFF3] w-full h-full flex flex-col  `}
       >

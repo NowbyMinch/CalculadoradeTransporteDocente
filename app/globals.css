@@ -19,6 +19,10 @@
   }
 }
 
+html{
+  overflow: hidden;
+}
+
 .custom-scroll::-webkit-scrollbar {
   width: 8px;
 }

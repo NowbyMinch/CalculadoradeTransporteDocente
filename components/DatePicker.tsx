@@ -19,8 +19,9 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { ptBR } from "date-fns/locale";
 
+
 type DatePickerProps = {
-  onChangePreset?: (date: string) => void; // formato "YYYY-MM-DD"
+  onChangePreset?: number; // formato "YYYY-MM-DD"
   onChange: (date: Date) => void; // formato "YYYY-MM-DD"
 };
 
@@ -195,7 +196,7 @@ export function DatePicker({ onChangePreset, onChange }: DatePickerProps) {
   }, [inputValue, inputValue2, inputValue3, onChange]);
 
   return (
-    <div className="relative max-w-120">
+    <div ref={ref} className="relative max-w-120">
       <div className="relative ">
         {/* <div
           className={`${
@@ -311,9 +312,10 @@ export function DatePicker({ onChangePreset, onChange }: DatePickerProps) {
               transition: { duration: 0.15, ease: "easeInOut" },
             }}
             id="date-box"
-            className="absolute right-0 z-10 mt-2  min-w-52.5 rounded-[25px] border border-gray-400 bg-[rgba(12,12,14,0.985)] shadow-xl origin-top-right"
+           
+            className={`absolute  ${onChangePreset === 1 ? "left-0" : "right-0"} z-10 mt-2 min-w-52.5 rounded-[25px] border border-gray-400 bg-[rgba(12,12,14,0.985)] shadow-xl origin-top-right"`}
           >
-            <div ref={ref} className=" rounded-[25px] p-4">
+            <div  className=" rounded-[25px] p-4">
               {/* Calendar Header */}
               <div className="mb-3 flex items-center justify-between px-2 text-white">
                 <button
