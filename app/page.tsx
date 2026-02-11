@@ -133,6 +133,10 @@ export default function Home() {
 
   return (
     <>
+      {/* <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 ">
+        <div className="absolute w-screen h-screen left-0 bottom-0 "></div>
+      </div> */}
+
       <header className="w-full min-h-18 bg-white shadow-md">
         <h1 className="font-bold text-[28px] flex items-center p-3 text-[#f0c15b]">
           Calculadora de Transporte Docente
@@ -384,7 +388,13 @@ export default function Home() {
                     Feriados:
                   </label>
                   {feriados.map((feriado, i) => {
-                    if (i < 4 && feriado.date.) {
+                    if (
+                      i < 4 &&
+                      inicio &&
+                      fim &&
+                      new Date(feriado.date) >= inicio &&
+                      new Date(feriado.date) <= fim
+                    ) {
                       return (
                         <div
                           key={i}
@@ -399,7 +409,25 @@ export default function Home() {
 
                           <span className="line-clamp-2 ">{feriado.name}</span>
                         </div>
-                        // {i > }
+                      );
+                    } else if (
+                      inicio &&
+                      fim &&
+                      new Date(feriado.date) >= inicio &&
+                      new Date(feriado.date) <= fim &&
+                      i >= 4 &&
+                      i < 5
+                    ) {
+                      return (
+                        <motion.button
+                          key={i}
+                          initial={{ scale: 1 }}
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.978 }}
+                          className="cursor-pointer font-semibold self-center mt-1"
+                        >
+                          ver mais
+                        </motion.button>
                       );
                     }
                   })}
