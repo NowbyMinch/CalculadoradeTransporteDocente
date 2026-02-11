@@ -202,25 +202,25 @@ export default function Home() {
           <div className="w-110 max-h-full h-full bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
             <div className="flex flex-col gap-8">
               <div className="">
-                <h1 className="text-[26px] font-semibold text-[rgba(215,171,42,1)]">
+                <h1 className="text-[26px] font-bold text-[rgba(215,171,42,1)]">
                   Se planeje mais rápido!
                 </h1>
-                <p className="text-black">
+                <p className="text-neutral-500 text-[15px]">
                   Simule o pagamento de seus funcionários de forma simples e
                   descomplicada
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                <label className="text-[rgba(26,26,26,1)] text-[19px]">
                   Período escolar
                 </label>
                 <div className="flex justify-between">
-                  <div className="">
+                  <div className="text-neutral-500 ">
                     <label>Início</label>
                     <DatePicker onChange={setInicio} />
                   </div>
-                  <div className="">
+                  <div className="text-neutral-500">
                     <label>Fim</label>
                     <DatePicker onChange={setFim} />
                   </div>
@@ -228,7 +228,7 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                <label className="text-[rgba(26,26,26,1)] text-[19px] ">
                   Dias da semana
                 </label>
                 <div className="flex gap-1 justify-between">
@@ -250,16 +250,21 @@ export default function Home() {
                           ? "rgba(255,208,69,1)"
                           : "rgba(217,217,217,1)",
                       }}
-                      className="w-10 h-10  cursor-pointer rounded-full text-black "
+                      className="w-12 h-12 cursor-pointer rounded-full text-black "
                     >
-                      {days[i].slice(0, 1).toUpperCase()}
-                    </motion.button>
-                  ))}
+                      {(() => {
+                        const abbr = days[i].slice(0, 3);
+                        return (
+                          abbr.charAt(0).toUpperCase() + abbr.slice(1).toLowerCase()
+                        );
+                      })()}
+                  </motion.button>
+                ))}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                <label className="text-[rgba(26,26,26,1)] text-[19px]">
                   Selecione os transportes que se aplicam:
                 </label>
 
@@ -325,7 +330,7 @@ export default function Home() {
               </div>
               <div className="flex justify-between">
                 <div className="flex flex-col gap-2 ">
-                  <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                  <label className="text-[rgba(26,26,26,1)] text-[19px]">
                     Passagens
                   </label>
                   <input
@@ -340,7 +345,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                  <label className="text-[rgba(26,26,26,1)] text-[19px]">
                     Valor unitário
                   </label>
                   <NumericFormat
@@ -383,7 +388,7 @@ export default function Home() {
                     );
                   }
                 }}
-                className="py-3 px-4 cursor-pointer rounded-2xl w-fit bg-[#f0c15b] font-semibold self-center"
+                className="py-3 px-4 cursor-pointer rounded-2xl w-fit bg-[#ffd045] self-center"
               >
                 Calcular
               </motion.button>
@@ -391,8 +396,8 @@ export default function Home() {
           </div>
 
           <div className="w-220 max-h-full h-full flex flex-col gap-4 max-w-full">
-            <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#f0c15b] rounded-2xl shadow-lg">
-              <span className="text-black font-semibold">
+            <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg">
+              <span className="text-amber-800 text-lg">
                 Pagamento estimado{" "}
               </span>
               <h1 className="font-bold text-[35px]">

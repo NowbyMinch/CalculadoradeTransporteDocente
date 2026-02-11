@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Planejador de Custos 
 
-## Getting Started
+Simulador de pagamento escolar para planejamento de folha de funcionários de forma simples, visual e rápida.
 
-First, run the development server:
+O **Planejador de Custos** permite calcular estimativas de pagamento com base em período escolar, dias trabalhados, carga horária, transporte e eventos do calendário (feriados e recessos). O objetivo é ajudar instituições de ensino — principalmente escolas pequenas, cursos e projetos educacionais — a prever custos operacionais mensais sem precisar usar planilhas complexas.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Funcionalidades
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+* 📅 Seleção de período escolar (data de início e fim)
+* 🚌 Cálculo de vale‑transporte
+* 📊 Estimativa automática de pagamento total
+* 🧾 Consideração de feriados e recessos escolares
+* 📁 Exportação em PDF e CSV
+* 🎯 Interface visual pensada para uso rápido (sem planilhas)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧠 Problema que o projeto resolve
 
-## Learn More
+Escolas e projetos educacionais geralmente fazem o cálculo da folha manualmente, o que causa:
 
-To learn more about Next.js, take a look at the following resources:
+* erros frequentes
+* dificuldade de prever custos do mês
+* perda de tempo com planilhas
+* dificuldade de simular cenários
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+O *Planejador de Custos* transforma isso em uma simulação interativa em segundos.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 🖥️ Interface
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+O sistema é dividido em dois blocos principais:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 1. Planejamento
+
+Onde o usuário informa:
+
+* Período escolar
+* Dias trabalhados
+* Valor da hora/aula
+* Horas por dia
+* Transporte
+
+### 2. Resultado
+
+Onde o sistema calcula automaticamente:
+
+* Total de dias trabalhados
+* Impacto de feriados
+* Recessos
+* Pagamento estimado
+
+
+## 🧩 Possíveis melhorias futuras
+
+* Salvar múltiplos funcionários
+* Histórico de simulações
+* Sistema de autenticação
+* Cálculo automático de impostos (INSS / FGTS)
+* Integração com calendário oficial brasileiro
+* Versão mobile
+
+
+## 🎯 Público alvo
+
+* Escolas particulares pequenas
+* Cursos livres
+* Professores autônomos
+* Projetos sociais educacionais
+
+
+## 📄 Licença
+
+MIT License — uso livre para fins educacionais e comerciais.

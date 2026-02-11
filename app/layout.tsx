@@ -10,7 +10,7 @@ const geistSans = Geist({
 
 const readexPro = Readex_Pro({
   subsets: ["latin", "arabic"],
-  weight: ["200", "700"], // intervalo da variável
+  weight: "variable",
   display: "swap",
   variable: "--font-readex",
 });
@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full w-full ${readexPro.variable}`}>
+    <html lang="en" className={`h-full w-full ${readexPro.variable} font-readex`}>
       <body
         className={`bg-[#EAEFF3] w-full h-full flex flex-col  `}
       >
