@@ -50,6 +50,16 @@ export default function Home() {
   const [tram, setTram] = useState(false);
   const [feriados, setFeriados] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
+  const [ativos, setAtivos] = useState(0);
+
+  function escolherTransporte(){
+    let active = 0
+    for (let i = 0; i < 3; i++){
+      if (bus) {active ++}
+      else if (train) {active ++}
+      else if (bus) {active ++}
+    }
+  }
 
   function calcularPreco(
     passagem: number,
@@ -186,9 +196,9 @@ export default function Home() {
         </h1>
       </header>
 
-      <div className="h-full w-full flex flex-col justify-center items-center ">
+      <div className="h-full min-h-fit py-5 w-full flex flex-col justify-center items-center">
         {/* -------------------------------------------- */}
-        <div className=" max-h-[95%] max-w-[95%] h-175 md:flex-row flex flex-col justify-center items-center md:gap-4">
+        <div className=" max-h-[95%] max-w-[95%] min-h-fit md:flex-row flex flex-col justify-center items-center md:gap-4">
           <div className="w-110 max-h-full h-full bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
             <div className="flex flex-col gap-8">
               <div className="">
