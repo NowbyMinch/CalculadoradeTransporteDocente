@@ -6,6 +6,7 @@ import { motion, scale } from "framer-motion";
 import { BusFront, ChevronDown, TrainFront, TramFront } from "lucide-react";
 import { eachDayOfInterval, isMonday } from "date-fns";
 import { NumericFormat } from "react-number-format";
+import { style } from "framer-motion/client";
 
 const days = [
   "domingo",
@@ -37,13 +38,30 @@ type Feriado = {
 export default function Home() {
   const [inicio, setInicio] = useState<Date>();
   const [fim, setFim] = useState<Date>();
+  const [passagem, setPassagem] = useState(0);
   const [valor, setValor] = useState("");
+  const [diasContados, setDiasContados] = useState<number>(0);
+  const [totalDias, setTotalDias] = useState<number>(0);
+  const [feriadosContados, setFeriadosContados] = useState(0);
+  const [preco, setPreco] = useState<number>(0);
   const [week, setWeek] = useState(selected);
   const [bus, setBus] = useState(false);
   const [train, setTrain] = useState(false);
   const [tram, setTram] = useState(false);
   const [feriados, setFeriados] = useState<Array<Feriado>>([]);
 
+  function calcularPreco(
+    passagem: number,
+    valorUnitario: number,
+    diasContados: number,
+  ) {
+    let transportes = 0;
+    if (bus) transportes++;
+    if (train) transportes++;
+    if (tram) transportes++;
+
+    setPreco(passagem * valorUnitario * diasContados * transportes);
+  }
   function contarDiasSelecionadosSemFeriados(
     inicio: Date,
     fim: Date,
@@ -52,6 +70,7 @@ export default function Home() {
   ) {
     const feriadosSet = new Set(feriados.map((f) => f.date));
     let total = 0;
+    let feriadosEmTrabalho = 0;
 
     const dataAtual = new Date(inicio);
 
@@ -64,17 +83,28 @@ export default function Home() {
       const trabalhaNesseDia = week[diaNome];
       const ehFeriado = feriadosSet.has(dataISO);
 
-      if (trabalhaNesseDia && !ehFeriado) {
-        total++;
+      if (trabalhaNesseDia) {
+        if (ehFeriado) {
+          feriadosEmTrabalho++;
+        } else {
+          total++;
+        }
       }
 
       dataAtual.setDate(dataAtual.getDate() + 1);
     }
+    const umDia = 1000 * 60 * 60 * 24;
+
+    const diff = fim.getTime() - inicio.getTime();
+    setTotalDias(Math.floor(diff / umDia) + 1);
+    setFeriadosContados(feriadosEmTrabalho);
 
     console.log("Total dias trabalhados:", total);
+    console.log("Total dias trabalhados:", Math.floor(diff / umDia) + 1);
+    console.log("Feriados Contados:", feriadosContados);
+    setDiasContados(total);
     return total;
   }
-
   useEffect(() => {
     const buscar = async () => {
       try {
@@ -100,9 +130,14 @@ export default function Home() {
   useEffect(() => {
     console.log(inicio);
   }, [inicio]);
+
   return (
     <>
-      <header className="w-full min-h-18 bg-white shadow-md"></header>
+      <header className="w-full min-h-18 bg-white shadow-md">
+        <h1 className="font-bold text-[28px] flex items-center p-3 text-[#f0c15b]">
+          Calculadora de Transporte Docente
+        </h1>
+      </header>
 
       <div className="h-full w-full flex flex-col justify-center items-center ">
         {/* -------------------------------------------- */}
@@ -239,6 +274,8 @@ export default function Home() {
                   <input
                     type="Number"
                     min={0}
+                    value={passagem}
+                    onChange={(e) => setPassagem(Number(e.target.value))}
                     inputMode="numeric"
                     placeholder="Quantidade"
                     className="border-gray-400 max-w-44 relative cursor-text p-2.5 h-12 gap-1 text-[16px] flex w-full rounded-[15px] border"
@@ -261,7 +298,7 @@ export default function Home() {
                     onValueChange={(values) => {
                       const { formattedValue, value } = values;
                       setValor(formattedValue); // Valor formatado: "R$ 1.234,56"
-                      console.log(value); // Valor numérico: "1234.56"
+                      console.log(valor); // Valor numérico: "1234.56"
                     }}
                   />
                 </div>
@@ -272,15 +309,20 @@ export default function Home() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => {
-                  console.log(inicio);
-                  console.log(fim);
                   if (inicio && fim) {
-                    console.log("Hi");
-                    contarDiasSelecionadosSemFeriados(
-                      inicio,
-                      fim,
-                      week,
-                      feriados,
+                    console.log(
+                      calcularPreco(
+                        passagem,
+                        parseFloat(
+                          valor.replace(/[R$ ]/g, "").replace(",", "."),
+                        ),
+                        contarDiasSelecionadosSemFeriados(
+                          inicio,
+                          fim,
+                          week,
+                          feriados,
+                        ),
+                      ),
                     );
                   }
                 }}
@@ -293,8 +335,15 @@ export default function Home() {
 
           <div className="w-220 max-h-full h-full flex flex-col gap-4 max-w-full">
             <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#f0c15b] rounded-2xl shadow-lg">
-              <span className="">Pagamento estimado anual</span>
-              <h1 className="font-bold text-[35px]">R$ 18.720,00</h1>
+              <span className="text-black font-semibold">
+                Pagamento estimado{" "}
+              </span>
+              <h1 className="font-bold text-[35px]">
+                {preco.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+              </h1>
             </div>
             <div className="bg-white rounded-2xl w-full h-full flex flex-col shadow-lg p-5 gap-5">
               <div className="">
@@ -313,11 +362,11 @@ export default function Home() {
                     <ChevronDown className="text-gray-500" />
                   </motion.button>
                 </div>
-                <span className="text-black">Total de dias: 88</span>
+                <span className="text-black">Total de dias: {totalDias}</span>
                 <span className="text-black mx-2">|</span>
-                <span className="text-black">Trabalhados: 80</span>
+                <span className="text-black">Trabalhados: {diasContados}</span>
                 <span className="text-black mx-2">|</span>
-                <span className="text-black">Feriados: 8</span>
+                <span className="text-black">Feriados: {feriadosContados}</span>
               </div>
 
               <div className="flex gap-7 w-full h-full ">
@@ -335,28 +384,25 @@ export default function Home() {
                     Feriados:
                   </label>
                   {feriados.map((feriado, i) => {
-                    if (i < 3) {
+                    if (i < 4 && feriado.date.) {
                       return (
                         <div
                           key={i}
                           className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
                         >
-                          <div className="text-[rgba(255,208,69,1)] h-full text-[30px] font-semibold flex items-center justify-center text-center px-3 leading-none border-r border-r-[rgba(0,0,0,0.21)]">
-                            {feriado.date.split("-")[1]}
+                          <div className="w-15 h-full flex justify-center items-center  ">
+                            <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
+                              {feriado.date.split("-")[2]}
+                            </div>
+                            <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
                           </div>
-                          <span>{feriado.name}</span>
+
+                          <span className="line-clamp-2 ">{feriado.name}</span>
                         </div>
+                        // {i > }
                       );
                     }
                   })}
-                  <motion.button
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-full font-semibold cursor-pointer"
-                  >
-                    Ver mais...
-                  </motion.button>
                 </div>
               </div>
             </div>
