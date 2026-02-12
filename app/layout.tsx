@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`h-screen w-screen overflow-hidden ${readexPro.variable} font-readex`}>
       <body
-        className={`bg-[#EAEFF3] w-full h-full flex flex-col  `}
+        className={`bg-[#EAEFF3] w-screen h-screen overflow-y-auto  flex flex-col  `}
       >
         {children}
       </body>

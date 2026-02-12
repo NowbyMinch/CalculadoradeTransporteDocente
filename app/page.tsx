@@ -50,7 +50,7 @@ export default function Home() {
   const [tram, setTram] = useState(false);
   const [feriados, setFeriados] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
-  const [ativos, setAtivos] = useState(1);
+  const [ativos, setAtivos] = useState(0);
 
   useEffect(() => {
     let count = 0;
@@ -163,9 +163,8 @@ export default function Home() {
     <>
       {verMais && (
         <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex">
-          <div className="flex flex-col m-auto z-900 rounded-4xl w-120 h-120 max-h-120 overflow-x-hidden">
-
-            <div className=" flex flex-col gap-2 px-3 pt-3  custom-scroll w-full h-full bg-white rounded-4xl ">
+          <div className="flex flex-col m-auto z-900 rounded-3xl w-120 h-120 max-h-120 overflow-x-hidden">
+            <div className=" flex flex-col gap-2 p-3 overflow-y-auto custom-scroll w-full h-full bg-white rounded-3xl ">
               <X
                 onClick={() => {
                   setVerMais(!verMais);
@@ -216,10 +215,10 @@ export default function Home() {
       <div className="h-full min-h-fit py-5 w-full flex flex-col justify-center  items-center">
         {/* -------------------------------------------- */}
         <div
-          className={`max-h-[95%] max-w-[95%]  ${ativos === 0 ? "h-146" : "h-[698.5px]"}  transition-all duration-300 ease-in-out md:flex-row flex flex-col justify-center items-center md:gap-4`}
+          className={`max-h-[95%] max-w-[95%] ${ativos === 0 ? "h-146" : "h-[698.5px]"}  overflow-hidden min-h-fit transition-all duration-300 ease-in-out gap-5 md:flex-row flex flex-col justify-center items-center `}
         >
-          <div className=" rounded-2xl h-full max-h-full">
-            <div className="w-110 max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
+          <div className="w-fit rounded-2xl h-full max-h-full  ">
+            <div className="min-w-90 w-110 max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
               <div className="flex flex-col gap-8 ">
                 <div className="">
                   <h1 className="text-[26px] font-bold text-[rgba(215,171,42,1)]">
@@ -237,7 +236,7 @@ export default function Home() {
                   <div className="flex justify-between">
                     <div className="text-neutral-500 ">
                       <label className="text-[15px]">Início</label>
-                      <DatePicker onChange={setInicio} onChangePreset={1}/>
+                      <DatePicker onChange={setInicio} onChangePreset={1} />
                     </div>
                     <div className="text-neutral-500">
                       <label className="text-[15px]">Fim</label>
@@ -411,7 +410,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="w-220 max-h-full h-full flex flex-col gap-4 max-w-full">
+          <div className="w-220 max-h-full h-full flex flex-col gap-4 ">
             <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg">
               <span className="text-amber-800 text-lg">
                 Pagamento estimado{" "}
@@ -423,7 +422,7 @@ export default function Home() {
                 })}
               </h1>
             </div>
-            <div className="bg-white rounded-2xl w-full h-full flex flex-col shadow-lg p-5 gap-5">
+            <div className="bg-white rounded-2xl w-full h-full flex overflow-y-auto custom-scroll flex-col shadow-lg p-5 gap-5">
               <div className="">
                 <div className="flex justify-between">
                   <h1 className="text-[26px] font-semibold text-[rgba(215,171,42,1)]">
@@ -447,8 +446,8 @@ export default function Home() {
                 <span className="text-black">Feriados: {feriadosContados}</span>
               </div>
 
-              <div className="flex gap-7 w-full h-full ">
-                <div className="min-w-110 h-full flex flex-col justify-between rounded-2xl ">
+              <div className="flex gap-7 w-full h-full max-xl:flex-col ">
+                <div className="min-w-110 h-full min-h-64 flex flex-col justify-between rounded-2xl ">
                   <Calendar onChange={() => {}} />
                   <div className="">
                     {/* <button>a</button>
@@ -472,9 +471,9 @@ export default function Home() {
                       return (
                         <div
                           key={i}
-                          className="flex w-full h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                          className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
                         >
-                          <div className="w-15 h-full flex justify-center items-center  ">
+                          <div className="min-w-15 h-full flex justify-center items-center  ">
                             <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
                               {feriado.date.split("-")[2]}
                             </div>
@@ -501,7 +500,7 @@ export default function Home() {
                           onClick={() => {
                             setVerMais(true);
                           }}
-                          className="cursor-pointer font-semibold self-center mt-1"
+                          className="cursor-pointer font-semibold self-center mt-1 mb-2"
                         >
                           ver mais
                         </motion.button>
