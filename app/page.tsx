@@ -1,12 +1,10 @@
 "use client";
 import { Calendar, DatePicker } from "@/components/DatePicker";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { motion, scale } from "framer-motion";
+import { motion } from "framer-motion";
 import { BusFront, ChevronDown, TrainFront, TramFront, X } from "lucide-react";
-import { eachDayOfInterval, isMonday } from "date-fns";
+import ValidationPopup from "@/components/ValidationPopup";
 import { NumericFormat } from "react-number-format";
-import { style } from "framer-motion/client";
 
 const days = [
   "domingo",
@@ -38,7 +36,7 @@ type Feriado = {
 export default function Home() {
   const [inicio, setInicio] = useState<Date>();
   const [fim, setFim] = useState<Date>();
-  const [passagens, setPassagens] = useState<number[]>([]);
+  const [passagens, setPassagens] = useState<Array<number | undefined>>([]);
   const [valores, setValores] = useState<string[]>([]);
   const [diasContados, setDiasContados] = useState<number>(0);
   const [totalDias, setTotalDias] = useState<number>(0);
@@ -51,6 +49,8 @@ export default function Home() {
   const [feriados, setFeriados] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
   const [ativos, setAtivos] = useState(0);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(() => {
     let count = 0;
@@ -63,7 +63,7 @@ export default function Home() {
     // Ajusta os arrays dinamicamente
     setPassagens((prev) => {
       const novo = [...prev];
-      while (novo.length < count) novo.push(0);
+      while (novo.length < count) novo.push(undefined);
       return novo.slice(0, count);
     });
 
@@ -85,7 +85,7 @@ export default function Home() {
           .replace(",", "."),
       );
 
-      total += (passagens[i] || 0) * valorNumerico;
+      total += (passagens[i] ?? 0) * valorNumerico;
     }
 
     setPreco(total * diasContados);
@@ -221,7 +221,7 @@ export default function Home() {
             <div className="min-w-90 w-110 max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
               <div className="flex flex-col gap-8 ">
                 <div className="">
-                  <h1 className="text-[26px] font-bold text-[rgba(215,171,42,1)]">
+                  <h1 className="text-[26px] font-bold text-[#f0c15b]">
                     Se planeje mais rápido!
                   </h1>
                   <p className="text-neutral-500 text-[15px]">
@@ -354,11 +354,10 @@ export default function Home() {
                         type="number"
                         min={0}
                         placeholder="0"
-                        value={passagens[i] === 0 ? "" : passagens[i]}
+                        value={passagens[i] === undefined ? "" : passagens[i]}
                         onChange={(e) => {
                           const novo = [...passagens];
-                          novo[i] =
-                            e.target.value === "" ? 0 : Number(e.target.value);
+                          novo[i] = e.target.value === "" ? undefined : Number(e.target.value);
                           setPassagens(novo);
                         }}
                         className="border-gray-400 max-w-44 p-2.5 h-12 rounded-[15px] border"
@@ -391,6 +390,66 @@ export default function Home() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => {
+                    if (!inicio || !fim) {
+                      let msg = "";
+                      if (!inicio && !fim) {
+                        msg = "Preencha o início e o fim do período escolar.";
+                      } else if (!inicio) {
+                        msg = "Preencha a data de início do período escolar.";
+                      } else {
+                        msg = "Preencha a data de fim do período escolar.";
+                      }
+                      setAlertMessage(msg);
+                      setAlertVisible(true);
+                      return;
+                    }
+                    if (inicio > fim) {
+                      setAlertMessage(
+                        "A data de fim do período escolar deve ser posterior a data de início.",
+                      );
+                      setAlertVisible(true);
+                      return;
+                    }
+
+                    if (Object.values(week).every((v) => !v)) {
+                      setAlertMessage("Selecione pelo menos um dia da semana que o funcionário trabalha.");
+                      setAlertVisible(true);
+                      return;
+                    }
+
+                    for (let i = 0; i < ativos; i++) {
+                      const numPassagens = passagens[i];
+
+                      if (numPassagens === undefined) {
+                        setAlertMessage(
+                          "Preencha o número de passagens para o transporte selecionado.",
+                        );
+                        setAlertVisible(true);
+                        return;
+                      }
+
+                      if (numPassagens <= 0) {
+                        setAlertMessage("O número de passagens deve ser maior que 0.");
+                        setAlertVisible(true);
+                        return;
+                      }
+
+                      const valorNumerico = parseFloat(
+                        (valores[i] || "0")
+                          .replace(/[R$ ]/g, "")
+                          .replace(".", "")
+                          .replace(",", "."),
+                      );
+
+                      if (isNaN(valorNumerico) || valorNumerico <= 0) {
+                        setAlertMessage(
+                          "O valor unitário deve ser maior que R$0,00.",
+                        );
+                        setAlertVisible(true);
+                        return;
+                      }
+                    }
+
                     if (inicio && fim) {
                       const dias = contarDiasSelecionadosSemFeriados(
                         inicio,
@@ -425,7 +484,7 @@ export default function Home() {
             <div className="bg-white rounded-2xl w-full h-full flex overflow-y-auto custom-scroll flex-col shadow-lg p-5 gap-5">
               <div className="">
                 <div className="flex justify-between">
-                  <h1 className="text-[26px] font-semibold text-[rgba(215,171,42,1)]">
+                  <h1 className="text-[26px] font-semibold text-[#f0c15b]">
                     Calendário
                   </h1>
                   <motion.button
@@ -513,6 +572,11 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <ValidationPopup
+        visible={alertVisible}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </>
   );
 }
