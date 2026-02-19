@@ -1,10 +1,11 @@
 "use client";
-import { Calendar, DatePicker } from "@/components/DatePicker";
-import { useEffect, useState } from "react";
+import { Calendar, CalendarRecesso, DatePicker } from "@/components/DatePicker";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BusFront, ChevronDown, TrainFront, TramFront, X } from "lucide-react";
 import ValidationPopup from "@/components/ValidationPopup";
 import { NumericFormat } from "react-number-format";
+import { useFeriados } from "@/contexts/FeriadosContext";
 
 const days = [
   "domingo",
@@ -30,12 +31,13 @@ const selected: Record<Day, boolean> = {
 type Feriado = {
   date: string; // YYYY-MM-DD
   name: string;
-  type: string;
+  type?: string;
 };
 
 export default function Home() {
-  const [inicio, setInicio] = useState<Date>();
-  const [fim, setFim] = useState<Date>();
+  const { feriados, setFeriados } = useFeriados();
+  const [inicio, setInicio] = useState<Date | null>();
+  const [fim, setFim] = useState<Date | null>();
   const [passagens, setPassagens] = useState<Array<number | undefined>>([]);
   const [valores, setValores] = useState<string[]>([]);
   const [diasContados, setDiasContados] = useState<number>(0);
@@ -46,11 +48,32 @@ export default function Home() {
   const [bus, setBus] = useState(false);
   const [train, setTrain] = useState(false);
   const [tram, setTram] = useState(false);
-  const [feriados, setFeriados] = useState<Array<Feriado>>([]);
-  const [verMais, setVerMais] = useState(false);
   const [ativos, setAtivos] = useState(0);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [algumFeriado, setAlgumFeriado] = useState(false);
+  const [feriadosNoPeriodo, setFeriadosNoPeriodo] = useState<Array<Feriado>>(
+    [],
+  );
+  const [recessos, setRecessos] = useState<Array<Feriado>>([]);
+  const [verMais, setVerMais] = useState(false);
+  const [adicionarRecesso, setAdicionarRecesso] = useState(false);
+
+  function CloseAdicionarRecesso() {
+    setAdicionarRecesso(false);
+    setInicio(null);
+    setFim(null);
+    setRecessoData(undefined);
+    setRecessoDataFinal(undefined);
+    setRecessoNome("");
+  }
+
+  const [recessoNome, setRecessoNome] = useState<string>("");
+  const [reSet, setReSet] = useState<Date>();
+  const [recessoData, setRecessoData] = useState<Date>();
+  const [recessoDataFinal, setRecessoDataFinal] = useState<Date>();
+
+  const dateReselectionHandler = useRef<Date | null>(null);
 
   useEffect(() => {
     let count = 0;
@@ -127,9 +150,6 @@ export default function Home() {
     setTotalDias(Math.floor(diff / umDia) + 1);
     setFeriadosContados(feriadosEmTrabalho);
 
-    console.log("Total dias trabalhados:", total);
-    console.log("Total dias trabalhados:", Math.floor(diff / umDia) + 1);
-    console.log("Feriados Contados:", feriadosContados);
     setDiasContados(total);
     return total;
   }
@@ -146,7 +166,6 @@ export default function Home() {
         }
 
         const data = await res.json();
-        console.log(data);
         setFeriados(data);
       } catch (err) {
         console.error("Erro ao buscar feriados:", err);
@@ -155,15 +174,106 @@ export default function Home() {
 
     buscar();
   }, []);
+
   useEffect(() => {
-    console.log(inicio);
-  }, [inicio]);
+    if (inicio && fim) {
+      setFeriadosNoPeriodo(
+        feriados.filter((feriado) => {
+          const dataFeriado = new Date(feriado.date);
+          return dataFeriado >= inicio && dataFeriado <= fim;
+        }),
+      );
+
+      if (feriadosNoPeriodo.length === 0) {
+        setAlgumFeriado(false);
+      } else {
+        setAlgumFeriado(true);
+      }
+    }
+  }, [inicio, fim]);
+
+  // useEffect(() => {
+  //   let atual = new Date().getTime();
+  //   let depois = new Date("2026-02-22").getTime();
+
+  //   while (atual < depois) {
+  //     console.log(new Date(atual));
+  //     atual += 1000 * 60 * 60 * 24; // Avança um dia
+  //   }
+  // }, []);
+
+  const adicionar = () => {
+    if (recessoNome.trim() === "" || !recessoData) {
+      setAlertMessage("Preencha o nome e a data do recesso.");
+      setAlertVisible(true);
+      return;
+    } else {
+      if (recessoDataFinal && recessoDataFinal < recessoData) {
+        setAlertMessage(
+          "A data final do recesso deve ser posterior à data de início.",
+        );
+        setAlertVisible(true);
+        return;
+      } else if (recessoDataFinal) {
+        const dataAtual = new Date(recessoData);
+        while (dataAtual <= recessoDataFinal) {
+          const novoFeriado: Feriado = {
+            name: recessoNome,
+            date: dataAtual.toISOString().split("T")[0],
+          };
+          setFeriados((prev) => [...prev, novoFeriado]);
+          setRecessos((prev) => [...prev, novoFeriado]);
+          dataAtual.setDate(dataAtual.getDate() + 1);
+        }
+      } else {
+        const novoFeriado: Feriado = {
+          name: recessoNome,
+          date: recessoData.toISOString().split("T")[0],
+        };
+      }
+
+      CloseAdicionarRecesso();
+      // setFeriados((prev) => [...prev, novoFeriado]);
+      // setRecessos((prev) => [...prev, novoFeriado]);
+      // setAdicionarRecesso(false);
+    }
+  };
+
+  const handleRecessoChange = (date: Date) => {
+    // if the setRecessoDataFinal is greater than the setRecessoData is inverts the date values;
+
+    if (!recessoData) {
+      setRecessoData(date);
+      dateReselectionHandler.current = date;
+      return;
+    } else {
+      setRecessoDataFinal(date);
+      console.log("True 1")
+      
+      if (recessoData && date) {
+        console.log("True 2")
+        
+        if (date && dateReselectionHandler.current && date.getDate() < dateReselectionHandler.current.getDate()) {
+          console.log("Fun 1 ")
+          setRecessoDataFinal(dateReselectionHandler.current);
+          setRecessoData(date);
+        }
+      }
+      return;
+    }
+
+    // else {
+    //   // Reset and start again
+    //   setRecessoData(date);
+    //   setRecessoDataFinal(undefined);
+    // }
+  };
 
   return (
     <>
       {verMais && (
         <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex">
-          <div className="flex flex-col m-auto z-900 rounded-3xl w-120 h-120 max-h-120 overflow-x-hidden">
+          <div className="flex flex-col m-auto z-900 rounded-3xl  w-120 h-120 max-h-120 overflow-x-hidden ">
             <div className=" flex flex-col gap-2 p-3 overflow-y-auto custom-scroll w-full h-full bg-white rounded-3xl ">
               <X
                 onClick={() => {
@@ -171,29 +281,22 @@ export default function Home() {
                 }}
                 className="ml-auto min-h-fit size-7 cursor-pointer"
               />
-              {feriados.map((feriado, i) => {
-                if (
-                  inicio &&
-                  fim &&
-                  new Date(feriado.date) >= inicio &&
-                  new Date(feriado.date) <= fim
-                ) {
-                  return (
-                    <div
-                      key={i}
-                      className="flex w-full min-h-15 border  border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
-                    >
-                      <div className="w-15 h-full flex justify-center items-center  ">
-                        <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
-                          {feriado.date.split("-")[2]}
-                        </div>
-                        <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
+              {feriadosNoPeriodo.map((feriado, i) => {
+                return (
+                  <div
+                    key={i}
+                    className="flex w-full min-h-15 border  border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                  >
+                    <div className="w-15 h-full flex justify-center items-center  ">
+                      <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
+                        {feriado.date.split("-")[2]}
                       </div>
-
-                      <span className="line-clamp-2 ">{feriado.name}</span>
+                      <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
                     </div>
-                  );
-                }
+
+                    <span className="line-clamp-2 ">{feriado.name}</span>
+                  </div>
+                );
               })}
             </div>
           </div>
@@ -206,19 +309,127 @@ export default function Home() {
         </div>
       )}
 
-      <header className="w-full min-h-18 bg-white shadow-md">
-        <h1 className="font-bold text-[28px] flex items-center p-3 text-[#f0c15b]">
+      {adicionarRecesso && (
+        <div className=" overflow-y-auto  absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex p-4">
+          <div className="flex flex-col m-auto z-900 rounded-3xl w-130   ">
+            <div className=" flex flex-col gap-2 p-3 w-full h-full bg-white rounded-3xl ">
+              <X
+                onClick={() => {
+                  CloseAdicionarRecesso();
+                }}
+                className="ml-auto min-h-fit size-7 cursor-pointer"
+              />
+              <div className=" w-full ">
+                <CalendarRecesso
+                  onChange={handleRecessoChange}
+                  inicio={recessoData}
+                  fim={recessoDataFinal}
+                  onChangePreset={1}
+                />
+              </div>
+
+              <div className=" flex flex-col gap-5 my-3 ">
+                <div className="flex flex-col sm:flex-row w-full gap-3">
+                  <div className=" ">
+                    <label className="text-[15px]">Início</label>
+                    <div className="sm:flex hidden w-full">
+                      <DatePicker
+                        onChange={setRecessoData}
+                        selected={
+                          recessoData
+                            ? recessoData.toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChangePreset={2}
+                      />
+                    </div>
+                    <div className="sm:hidden w-full">
+                      <DatePicker
+                        onChange={setRecessoData}
+                        selected={
+                          recessoData
+                            ? recessoData.toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChangePreset={3}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="">
+                    <label className="text-[15px]">Fim (opicional)</label>
+                    <div className="sm:flex hidden w-full">
+                      <DatePicker
+                        onChange={setRecessoDataFinal}
+                        selected={
+                          recessoDataFinal
+                            ? recessoDataFinal.toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChangePreset={2}
+                      />
+                    </div>
+                    <div className="sm:hidden w-full">
+                      <DatePicker
+                        onChange={setRecessoDataFinal}
+                        selected={
+                          recessoDataFinal
+                            ? recessoDataFinal.toISOString().split("T")[0]
+                            : ""
+                        }
+                        onChangePreset={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className=" w-80 max-w-full ">
+                  <label className="text-[15px]">Nome do Recesso</label>
+                  <input
+                    type="text"
+                    value={recessoNome}
+                    onChange={(e) => setRecessoNome(e.target.value)}
+                    placeholder="Nome do Recesso"
+                    className={`text-black w-full relative cursor-text pl-2 h-12 gap-1 text-[16px] flex rounded-[15px] border `}
+                  />
+                </div>
+
+                <motion.button
+                  initial={{ scale: 1 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    adicionar();
+                  }}
+                  className="py-3 px-4 cursor-pointer rounded-2xl w-fit bg-[#ffd045] self-center"
+                >
+                  Adicionar Recesso
+                </motion.button>
+              </div>
+            </div>
+          </div>
+          <div
+            onClick={() => {
+              CloseAdicionarRecesso();
+            }}
+            className="absolute w-screen h-screen left-0 bottom-0 "
+          ></div>
+        </div>
+      )}
+
+      <header className="w-full min-h-18 bg-white shadow-md px-3 flex items-center">
+        <h1 className=" max-w-full w-fit max-h-full leading-snug  line-clamp-2  font-bold text-[25px] text-[#f0c15b]">
           Calculadora de Transporte Docente
         </h1>
       </header>
 
-      <div className="h-full min-h-fit py-5 w-full flex flex-col justify-center  items-center">
+      <div className="h-full min-h-fit py-5 w-full flex  justify-center items-center">
         {/* -------------------------------------------- */}
         <div
-          className={`max-h-[95%] max-w-[95%] ${ativos === 0 ? "h-146" : "h-[698.5px]"}  overflow-hidden min-h-fit transition-all duration-300 ease-in-out gap-5 md:flex-row flex flex-col justify-center items-center `}
+          className={`max-h-[95%] max-w-[95%] ${ativos === 0 ? "lg:h-160" : "lg:h-175"}  flex flex-col lg:flex-row  min-h-fit transition-all duration-300 ease-in-out gap-5   justify-center items-center `}
         >
-          <div className="w-fit rounded-2xl h-full max-h-full  ">
-            <div className="min-w-90 w-110 max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
+          <div className=" rounded-2x lg:w-fit w-full h-full max-h-full ">
+            <div className="min-w-90 w-full lg:w-110 lg:max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
               <div className="flex flex-col gap-8 ">
                 <div className="">
                   <h1 className="text-[26px] font-bold text-[#f0c15b]">
@@ -240,7 +451,7 @@ export default function Home() {
                     </div>
                     <div className="text-neutral-500">
                       <label className="text-[15px]">Fim</label>
-                      <DatePicker onChange={setFim} />
+                      <DatePicker onChange={setFim} onChangePreset={2} />
                     </div>
                   </div>
                 </div>
@@ -260,7 +471,6 @@ export default function Home() {
                             ...prev,
                             [days[i]]: !prev[days[i]],
                           }));
-                          console.log(week);
                         }}
                         style={{
                           backgroundColor: week[days[i]]
@@ -357,7 +567,10 @@ export default function Home() {
                         value={passagens[i] === undefined ? "" : passagens[i]}
                         onChange={(e) => {
                           const novo = [...passagens];
-                          novo[i] = e.target.value === "" ? undefined : Number(e.target.value);
+                          novo[i] =
+                            e.target.value === ""
+                              ? undefined
+                              : Number(e.target.value);
                           setPassagens(novo);
                         }}
                         className="border-gray-400 max-w-44 p-2.5 h-12 rounded-[15px] border"
@@ -412,7 +625,9 @@ export default function Home() {
                     }
 
                     if (Object.values(week).every((v) => !v)) {
-                      setAlertMessage("Selecione pelo menos um dia da semana que o funcionário trabalha.");
+                      setAlertMessage(
+                        "Selecione pelo menos um dia da semana que o funcionário trabalha.",
+                      );
                       setAlertVisible(true);
                       return;
                     }
@@ -429,7 +644,9 @@ export default function Home() {
                       }
 
                       if (numPassagens <= 0) {
-                        setAlertMessage("O número de passagens deve ser maior que 0.");
+                        setAlertMessage(
+                          "O número de passagens deve ser maior que 0.",
+                        );
                         setAlertVisible(true);
                         return;
                       }
@@ -469,7 +686,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="w-220 max-h-full h-full flex flex-col gap-4 ">
+          <div className="lg:w-220 w-full max-h-full h-full flex flex-col gap-4 ">
             <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg">
               <span className="text-amber-800 text-lg">
                 Pagamento estimado{" "}
@@ -483,7 +700,7 @@ export default function Home() {
             </div>
             <div className="bg-white rounded-2xl w-full h-full flex overflow-y-auto custom-scroll flex-col shadow-lg p-5 gap-5">
               <div className="">
-                <div className="flex justify-between">
+                <div className="flex justify-between ">
                   <h1 className="text-[26px] font-semibold text-[#f0c15b]">
                     Calendário
                   </h1>
@@ -492,7 +709,7 @@ export default function Home() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                     className="
-                    flex gap-1 cursor-pointer w-fit h-fit p-2 rounded-[10px] border border-[rgba(0,0,0,0.18)] bg-[rgba(244,244,244,1)]"
+                    gap-1 cursor-pointer text-[15px] hidden lg:flex w-fit h-fit p-2 rounded-[10px] border border-[rgba(0,0,0,0.18)] bg-[rgba(244,244,244,1)]"
                   >
                     Rio de Janeiro, RJ
                     <ChevronDown className="text-gray-500" />
@@ -506,68 +723,99 @@ export default function Home() {
               </div>
 
               <div className="flex gap-7 w-full h-full max-xl:flex-col ">
-                <div className="min-w-110 h-full min-h-64 flex flex-col justify-between rounded-2xl ">
+                <div className="lg:min-w-110 h-full min-h-64 flex flex-col justify-between rounded-2xl gap-3">
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="
+                    gap-1 cursor-pointer text-[15px] truncate lg:hidden flex w-fit h-fit p-2 rounded-[10px] border border-[rgba(0,0,0,0.18)] bg-[rgba(244,244,244,1)]"
+                  >
+                    Rio de Janeiro, RJ
+                    <ChevronDown className="text-gray-500" />
+                  </motion.button>
+
                   <Calendar onChange={() => {}} />
                   <div className="">
                     {/* <button>a</button>
                     <button>b</button>
                     <button>c</button> */}
                   </div>
+                  <div className="w-full h-10 "></div>
                 </div>
 
                 <div className="flex flex-col gap-2 w-full ">
                   <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
                     Feriados:
                   </label>
-                  {feriados.map((feriado, i) => {
-                    if (
-                      i < 4 &&
-                      inicio &&
-                      fim &&
-                      new Date(feriado.date) >= inicio &&
-                      new Date(feriado.date) <= fim
-                    ) {
-                      return (
-                        <div
-                          key={i}
-                          className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
-                        >
-                          <div className="min-w-15 h-full flex justify-center items-center  ">
-                            <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
-                              {feriado.date.split("-")[2]}
-                            </div>
-                            <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
-                          </div>
 
-                          <span className="line-clamp-2 ">{feriado.name}</span>
-                        </div>
-                      );
-                    } else if (
-                      inicio &&
-                      fim &&
-                      new Date(feriado.date) >= inicio &&
-                      new Date(feriado.date) <= fim &&
-                      i >= 4 &&
-                      i < 5
-                    ) {
-                      return (
-                        <motion.button
-                          key={i}
-                          initial={{ scale: 1 }}
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.978 }}
-                          onClick={() => {
-                            setVerMais(true);
-                          }}
-                          className="cursor-pointer font-semibold self-center mt-1 mb-2"
-                        >
-                          ver mais
-                        </motion.button>
-                      );
-                    }
-                  })}
+                  {algumFeriado ? (
+                    feriadosNoPeriodo.map((feriado, i) => {
+                      if (i < 3) {
+                        return (
+                          <div
+                            key={i}
+                            className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                          >
+                            <div className="min-w-15 h-full flex justify-center items-center  ">
+                              <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
+                                {feriado.date.split("-")[2]}
+                              </div>
+                              <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
+                            </div>
+
+                            <span className="line-clamp-2 ">
+                              {feriado.name}
+                            </span>
+                          </div>
+                        );
+                      }
+                    })
+                  ) : (
+                    <div className="flex w-full max-w-120 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3  flex-col justify-center  p-5 ">
+                      <span className="line-clamp-2 self-center ">
+                        Não há feriados no período selecionado.
+                      </span>
+                    </div>
+                  )}
+
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setAdicionarRecesso(true)}
+                    className="w-full bg-[#F4F4F4] border border-[#0000002E] p-2 rounded-xl cursor-pointer "
+                  >
+                    + Adicionar novo recesso
+                  </motion.button>
+                  {/* <div className="flex w-full max-w-120 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3  flex-col justify-center  p-5 ">
+                    <span className="line-clamp-2 self-center ">
+                      Recessos não oficiais para cálculo mais preciso.
+                    </span>
+                  </div> */}
+
+                  {algumFeriado && feriadosNoPeriodo.length > 3 && (
+                    <div className="flex justify-center mt-2">
+                      <motion.button
+                        initial={{ scale: 1 }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.978 }}
+                        onClick={() => {
+                          setVerMais(true);
+                        }}
+                        className="cursor-pointer font-semibold self-center mt-1 "
+                      >
+                        ver mais
+                      </motion.button>
+                    </div>
+                  )}
                 </div>
               </div>
+              {/* 
+              <label className="text-[rgba(26,26,26,1)] text-[19px] font-black mt-2">
+                Recessos:
+              </label>
+               */}
             </div>
           </div>
         </div>
