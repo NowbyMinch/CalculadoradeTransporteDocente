@@ -19,7 +19,7 @@
   }
 }
 
-html{
+html {
   overflow: hidden;
 }
 
@@ -39,4 +39,24 @@ html{
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: #f0c15b;
+}
+
+.OverflowCalendarVar {
+  display: none;
+}
+
+.OverflowCalendar {
+  display: inline;
+}
+
+@media (width <= 430px) {
+  .PeriodoEscolar {
+    flex-direction: column;
+  }
+  .OverflowCalendar {
+    display: none;
+  }
+  .OverflowCalendarVar {
+    display: inline;
+  }
 }

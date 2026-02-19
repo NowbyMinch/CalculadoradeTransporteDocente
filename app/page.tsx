@@ -69,7 +69,6 @@ export default function Home() {
   }
 
   const [recessoNome, setRecessoNome] = useState<string>("");
-  const [reSet, setReSet] = useState<Date>();
   const [recessoData, setRecessoData] = useState<Date>();
   const [recessoDataFinal, setRecessoDataFinal] = useState<Date>();
 
@@ -248,13 +247,17 @@ export default function Home() {
       return;
     } else {
       setRecessoDataFinal(date);
-      console.log("True 1")
-      
+      console.log("True 1");
+
       if (recessoData && date) {
-        console.log("True 2")
-        
-        if (date && dateReselectionHandler.current && date.getDate() < dateReselectionHandler.current.getDate()) {
-          console.log("Fun 1 ")
+        console.log("True 2");
+
+        if (
+          date &&
+          dateReselectionHandler.current &&
+          date.getDate() < dateReselectionHandler.current.getDate()
+        ) {
+          console.log("Fun 1 ");
           setRecessoDataFinal(dateReselectionHandler.current);
           setRecessoData(date);
         }
@@ -272,7 +275,7 @@ export default function Home() {
   return (
     <>
       {verMais && (
-        <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex">
+        <div className="absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex p-4">
           <div className="flex flex-col m-auto z-900 rounded-3xl  w-120 h-120 max-h-120 overflow-x-hidden ">
             <div className=" flex flex-col gap-2 p-3 overflow-y-auto custom-scroll w-full h-full bg-white rounded-3xl ">
               <X
@@ -311,7 +314,7 @@ export default function Home() {
 
       {adicionarRecesso && (
         <div className=" overflow-y-auto  absolute w-screen h-screen bg-[rgba(0,0,0,0.23)] backdrop-blur-[2px] z-1000 left-0 bottom-0 flex p-4">
-          <div className="flex flex-col m-auto z-900 rounded-3xl w-130   ">
+          <div className="flex flex-col m-auto z-900 rounded-3xl max-w-full ">
             <div className=" flex flex-col gap-2 p-3 w-full h-full bg-white rounded-3xl ">
               <X
                 onClick={() => {
@@ -329,8 +332,8 @@ export default function Home() {
               </div>
 
               <div className=" flex flex-col gap-5 my-3 ">
-                <div className="flex flex-col sm:flex-row w-full gap-3">
-                  <div className=" ">
+                <div className="flex PeriodoEscolar w-full gap-3 ">
+                  <div className="w-46 max-w-full  ">
                     <label className="text-[15px]">Início</label>
                     <div className="sm:flex hidden w-full">
                       <DatePicker
@@ -356,7 +359,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="">
+                  <div className="w-46 max-w-full">
                     <label className="text-[15px]">Fim (opicional)</label>
                     <div className="sm:flex hidden w-full">
                       <DatePicker
@@ -390,7 +393,7 @@ export default function Home() {
                     value={recessoNome}
                     onChange={(e) => setRecessoNome(e.target.value)}
                     placeholder="Nome do Recesso"
-                    className={`text-black w-full relative cursor-text pl-2 h-12 gap-1 text-[16px] flex rounded-[15px] border `}
+                    className={`text-black w-full max-w-full relative cursor-text pl-2 h-12 gap-1 text-[16px] flex rounded-[15px] border `}
                   />
                 </div>
 
@@ -429,10 +432,10 @@ export default function Home() {
           className={`max-h-[95%] max-w-[95%] ${ativos === 0 ? "lg:h-160" : "lg:h-175"}  flex flex-col lg:flex-row  min-h-fit transition-all duration-300 ease-in-out gap-5   justify-center items-center `}
         >
           <div className=" rounded-2x lg:w-fit w-full h-full max-h-full ">
-            <div className="min-w-90 w-full lg:w-110 lg:max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
+            <div className=" w-full lg:w-110 lg:max-h-175 h-full custom-scroll overflow-y-auto bg-white rounded-2xl shadow-lg max-w-full flex flex-col p-5 gap-3">
               <div className="flex flex-col gap-8 ">
                 <div className="">
-                  <h1 className="text-[26px] font-bold text-[#f0c15b]">
+                  <h1 className="leading-snug text-[26px] font-bold text-[#f0c15b]">
                     Se planeje mais rápido!
                   </h1>
                   <p className="text-neutral-500 text-[15px]">
@@ -440,26 +443,32 @@ export default function Home() {
                     descomplicada
                   </p>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[rgba(26,26,26,1)] text-[19px]">
+                <div className="flex flex-col gap-2 ">
+                  <label className="text-[rgba(26,26,26,1)] text-[18px]">
                     Período escolar
                   </label>
-                  <div className="flex justify-between">
-                    <div className="text-neutral-500 ">
+                  <div className="flex PeriodoEscolar gap-3">
+                    <div className="text-neutral-500 max-w-full w-46 ">
                       <label className="text-[15px]">Início</label>
                       <DatePicker onChange={setInicio} onChangePreset={1} />
                     </div>
-                    <div className="text-neutral-500">
+                    <div className="text-neutral-500 max-w-full w-46">
                       <label className="text-[15px]">Fim</label>
-                      <DatePicker onChange={setFim} onChangePreset={2} />
+                      <div className="OverflowCalendarVar">
+                        <DatePicker onChange={setFim} onChangePreset={1} />
+                      </div>
+                      <div className="OverflowCalendar">
+                        <DatePicker onChange={setFim} onChangePreset={2} />
+                      </div>
+
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[rgba(26,26,26,1)] text-[19px] ">
+                  <label className="text-[rgba(26,26,26,1)] text-[18px] ">
                     Dias da semana
                   </label>
-                  <div className="flex gap-1 justify-between">
+                  <div className="flex gap-1 justify-between ">
                     {Array.from({ length: 7 }).map((_, i) => (
                       <motion.button
                         key={i}
@@ -477,7 +486,7 @@ export default function Home() {
                             ? "rgba(255,208,69,1)"
                             : "rgba(217,217,217,1)",
                         }}
-                        className="w-12 h-12 cursor-pointer rounded-full text-black text-[15px]"
+                        className="w-12 h-12  cursor-pointer rounded-full text-black text-[14px]"
                       >
                         {(() => {
                           const abbr = days[i].slice(0, 3);
@@ -491,7 +500,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[rgba(26,26,26,1)] text-[19px]">
+                  <label className="text-[rgba(26,26,26,1)] text-[18px]">
                     Selecione os transportes que se aplicam:
                   </label>
 
@@ -557,9 +566,9 @@ export default function Home() {
                 </div>
 
                 {Array.from({ length: ativos }).map((_, i) => (
-                  <div key={i} className="flex justify-between ">
+                  <div key={i} className="flex gap-3  PeriodoEscolar">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[19px]">Passagens </label>
+                      <label className="text-[18px]">Passagens </label>
                       <input
                         type="number"
                         min={0}
@@ -573,12 +582,12 @@ export default function Home() {
                               : Number(e.target.value);
                           setPassagens(novo);
                         }}
-                        className="border-gray-400 max-w-44 p-2.5 h-12 rounded-[15px] border"
+                        className="border-gray-400 w-46 max-w-full p-2.5 h-12 rounded-[15px] border"
                       />
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <label className="text-[19px]">Valor unitário</label>
+                      <label className="text-[18px]">Valor unitário</label>
                       <NumericFormat
                         value={valores[i] || ""}
                         prefix="R$ "
@@ -687,7 +696,7 @@ export default function Home() {
           </div>
 
           <div className="lg:w-220 w-full max-h-full h-full flex flex-col gap-4 ">
-            <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg">
+            <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg py-5">
               <span className="text-amber-800 text-lg">
                 Pagamento estimado{" "}
               </span>
@@ -723,7 +732,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-7 w-full h-full max-xl:flex-col ">
-                <div className="lg:min-w-110 h-full min-h-64 flex flex-col justify-between rounded-2xl gap-3">
+                <div className="lg:min-w-110  h-full min-h-64 flex flex-col justify-between rounded-2xl gap-3">
                   <motion.button
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.03 }}
@@ -741,11 +750,11 @@ export default function Home() {
                     <button>b</button>
                     <button>c</button> */}
                   </div>
-                  <div className="w-full h-10 "></div>
+                  {/* <div className="w-full h-10 "></div> */}
                 </div>
 
                 <div className="flex flex-col gap-2 w-full ">
-                  <label className="text-[rgba(26,26,26,1)] text-[19px] font-black">
+                  <label className="text-[rgba(26,26,26,1)] text-[18px] font-black">
                     Feriados:
                   </label>
 
@@ -784,7 +793,7 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => setAdicionarRecesso(true)}
-                    className="w-full bg-[#F4F4F4] border border-[#0000002E] p-2 rounded-xl cursor-pointer "
+                    className="w-full max-w-120 bg-[#F4F4F4] border border-[#0000002E] p-2 rounded-xl cursor-pointer "
                   >
                     + Adicionar novo recesso
                   </motion.button>
@@ -812,7 +821,7 @@ export default function Home() {
                 </div>
               </div>
               {/* 
-              <label className="text-[rgba(26,26,26,1)] text-[19px] font-black mt-2">
+              <label className="text-[rgba(26,26,26,1)] text-[18px] font-black mt-2">
                 Recessos:
               </label>
                */}
