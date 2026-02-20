@@ -6,6 +6,7 @@ import { BusFront, ChevronDown, TrainFront, TramFront, X } from "lucide-react";
 import ValidationPopup from "@/components/ValidationPopup";
 import { NumericFormat } from "react-number-format";
 import { useFeriados } from "@/contexts/FeriadosContext";
+import Image from "next/image";
 
 const days = [
   "domingo",
@@ -460,7 +461,6 @@ export default function Home() {
                       <div className="OverflowCalendar">
                         <DatePicker onChange={setFim} onChangePreset={2} />
                       </div>
-
                     </div>
                   </div>
                 </div>
@@ -696,16 +696,19 @@ export default function Home() {
           </div>
 
           <div className="lg:w-220 w-full max-h-full h-full flex flex-col gap-4 ">
-            <div className="text-white flex flex-col justify-center items-center min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg py-5">
-              <span className="text-amber-800 text-lg">
-                Pagamento estimado{" "}
-              </span>
-              <h1 className="font-bold text-[35px]">
-                {preco.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </h1>
+            <div className="text-white px-5 flex justify-between leading-tight min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg ">
+              <div className="h-full flex flex-col justify-center ">
+                <span className="text-amber-800 text-[22px]">
+                  Pagamento estimado{" "}
+                </span>
+                <h1 className="font-bold text-[35px]">
+                  {preco.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </h1>
+              </div>
+              <div className=" w-20 h-20 self-end"><Image src="/star.png" className="w-full h-full" width={100} height={100} alt="Transporte" /></div>
             </div>
             <div className="bg-white rounded-2xl w-full h-full flex overflow-y-auto custom-scroll flex-col shadow-lg p-5 gap-5">
               <div className="">
