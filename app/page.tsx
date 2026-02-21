@@ -499,6 +499,21 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+                <div className="flex flex-row gap-3">
+                  <div className="w-[50%] flex flex-col">
+                    <label className="text-[rgba(26,26,26,1)] text-[18px]">
+                      Valor hora/aula:
+                    </label>
+                    <input type="range" className="w-full h-1.5  accent-[#f0c15b]" />
+                  </div>
+                  <div className="w-[50%]">
+                    <label className="text-[rgba(26,26,26,1)] text-[18px]">
+                      Valor hora/aula:
+                    </label>
+                  </div>
+
+                </div>
+
                 <div className="flex flex-col gap-2">
                   <label className="text-[rgba(26,26,26,1)] text-[18px]">
                     Selecione os transportes que se aplicam:
@@ -708,7 +723,15 @@ export default function Home() {
                   })}
                 </h1>
               </div>
-              <div className=" w-20 h-20 self-end"><Image src="/star.png" className="w-full h-full" width={100} height={100} alt="Transporte" /></div>
+              <div className=" w-20 h-20 self-end">
+                <Image
+                  src="/star.png"
+                  className="w-full h-full"
+                  width={100}
+                  height={100}
+                  alt="Transporte"
+                />
+              </div>
             </div>
             <div className="bg-white rounded-2xl w-full h-full flex overflow-y-auto custom-scroll flex-col shadow-lg p-5 gap-5">
               <div className="">
