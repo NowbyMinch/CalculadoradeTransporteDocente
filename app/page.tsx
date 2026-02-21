@@ -499,7 +499,7 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                <div className="flex flex-row gap-3">
+                {/* <div className="flex flex-row gap-3">
                   <div className="w-[50%] flex flex-col">
                     <label className="text-[rgba(26,26,26,1)] text-[18px]">
                       Valor hora/aula:
@@ -512,7 +512,7 @@ export default function Home() {
                     </label>
                   </div>
 
-                </div>
+                </div> */}
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[rgba(26,26,26,1)] text-[18px]">
