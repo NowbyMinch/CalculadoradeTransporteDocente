@@ -749,7 +749,7 @@ export default function Home() {
           </div>
 
           <div className="lg:w-220 w-full max-h-full h-full flex flex-col gap-4 ">
-            <div className="text-white px-5 flex justify-between leading-tight min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg ">
+            <div className=" relative text-white px-5 py-5 flex justify-between leading-tight sm:min-h-[22%] w-full bg-[#ffd045] rounded-2xl shadow-lg ">
               <div className="h-full flex flex-col justify-center ">
                 <span className="text-amber-800 text-[22px]">
                   Pagamento estimado{" "}
@@ -761,10 +761,10 @@ export default function Home() {
                   })}
                 </h1>
               </div>
-              <div className=" w-20 h-20 self-end">
+              <div className=" w-20 h-20  absolute right-0 ">
                 <Image
                   src="/star.png"
-                  className="w-full h-full"
+                  className="w-full h-full "
                   width={100}
                   height={100}
                   alt="Transporte"
@@ -777,7 +777,7 @@ export default function Home() {
                   <h1 className="text-[26px] font-semibold text-[#f0c15b]">
                     Calendário
                   </h1>
-                  <motion.button
+                  {/* <motion.button
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
@@ -786,18 +786,18 @@ export default function Home() {
                   >
                     Rio de Janeiro, RJ
                     <ChevronDown className="text-gray-500" />
-                  </motion.button>
+                  </motion.button> */}
                 </div>
                 <span className="text-black">Total de dias: {totalDias}</span>
                 <span className="text-black mx-2">|</span>
-                <span className="text-black">Trabalhados: {diasContados}</span>
+                <span className="text-black">Dias trabalhados: {diasContados}</span>
                 <span className="text-black mx-2">|</span>
                 <span className="text-black">Feriados: {feriadosContados}</span>
               </div>
 
               <div className="flex gap-7 w-full h-full max-xl:flex-col ">
                 <div className="lg:min-w-110  h-full min-h-64 flex flex-col justify-between rounded-2xl gap-3">
-                  <motion.button
+                  {/* <motion.button
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
@@ -806,7 +806,7 @@ export default function Home() {
                   >
                     Rio de Janeiro, RJ
                     <ChevronDown className="text-gray-500" />
-                  </motion.button>
+                  </motion.button> */}
 
                   <Calendar onChange={() => {}} />
                   <div className="">
