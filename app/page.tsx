@@ -62,8 +62,12 @@ export default function Home() {
 
   function CloseAdicionarRecesso() {
     setAdicionarRecesso(false);
-    setInicio(null);
-    setFim(null);
+
+    // ❌ NÃO mexer no período escolar
+    // setInicio(null);
+    // setFim(null);
+
+    // ✅ Só limpar os dados do recesso
     setRecessoData(undefined);
     setRecessoDataFinal(undefined);
     setRecessoNome("");
@@ -176,21 +180,47 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (inicio && fim) {
-      setFeriadosNoPeriodo(
-        feriados.filter((feriado) => {
-          const dataFeriado = new Date(feriado.date);
-          return dataFeriado >= inicio && dataFeriado <= fim;
-        }),
+  if (!inicio || !fim) {
+    setFeriadosNoPeriodo([]);
+    setAlgumFeriado(false);
+    return;
+  }
+
+  const filtrados = feriados.filter((feriado) => {
+    const dataFeriado = new Date(feriado.date);
+    return dataFeriado >= inicio && dataFeriado <= fim;
+  });
+
+  setFeriadosNoPeriodo(filtrados);
+  setAlgumFeriado(filtrados.length > 0);
+
+}, [inicio, fim, feriados]);
+
+  useEffect(() => {
+    if (!inicio || !fim) return;
+
+    if (inicio > fim) return;
+
+    if (Object.values(week).every((v) => !v)) return;
+
+    // Verifica se os transportes estão preenchidos corretamente
+    for (let i = 0; i < ativos; i++) {
+      if (!passagens[i] || passagens[i]! <= 0) return;
+
+      const valorNumerico = parseFloat(
+        (valores[i] || "0")
+          .replace(/[R$ ]/g, "")
+          .replace(".", "")
+          .replace(",", "."),
       );
 
-      if (feriadosNoPeriodo.length === 0) {
-        setAlgumFeriado(false);
-      } else {
-        setAlgumFeriado(true);
-      }
+      if (isNaN(valorNumerico) || valorNumerico <= 0) return;
     }
-  }, [inicio, fim]);
+
+    const dias = contarDiasSelecionadosSemFeriados(inicio, fim, week, feriados);
+
+    calcularPreco(dias);
+  }, [inicio, fim, week, feriados, ativos, passagens, valores]);
 
   // useEffect(() => {
   //   let atual = new Date().getTime();
@@ -207,36 +237,44 @@ export default function Home() {
       setAlertMessage("Preencha o nome e a data do recesso.");
       setAlertVisible(true);
       return;
-    } else {
-      if (recessoDataFinal && recessoDataFinal < recessoData) {
-        setAlertMessage(
-          "A data final do recesso deve ser posterior à data de início.",
-        );
-        setAlertVisible(true);
-        return;
-      } else if (recessoDataFinal) {
-        const dataAtual = new Date(recessoData);
-        while (dataAtual <= recessoDataFinal) {
-          const novoFeriado: Feriado = {
-            name: recessoNome,
-            date: dataAtual.toISOString().split("T")[0],
-          };
-          setFeriados((prev) => [...prev, novoFeriado]);
-          setRecessos((prev) => [...prev, novoFeriado]);
-          dataAtual.setDate(dataAtual.getDate() + 1);
-        }
-      } else {
+    }
+
+    if (recessoDataFinal && recessoDataFinal < recessoData) {
+      setAlertMessage(
+        "A data final do recesso deve ser posterior à data de início.",
+      );
+      setAlertVisible(true);
+      return;
+    }
+
+    // 🔥 Se tiver período
+    if (recessoDataFinal) {
+      const dataAtual = new Date(recessoData);
+
+      while (dataAtual <= recessoDataFinal) {
         const novoFeriado: Feriado = {
           name: recessoNome,
-          date: recessoData.toISOString().split("T")[0],
+          date: dataAtual.toISOString().split("T")[0],
         };
-      }
 
-      CloseAdicionarRecesso();
-      // setFeriados((prev) => [...prev, novoFeriado]);
-      // setRecessos((prev) => [...prev, novoFeriado]);
-      // setAdicionarRecesso(false);
+        setFeriados((prev) => [...prev, novoFeriado]);
+        setRecessos((prev) => [...prev, novoFeriado]);
+
+        dataAtual.setDate(dataAtual.getDate() + 1);
+      }
     }
+    // 🔥 Se for só um dia
+    else {
+      const novoFeriado: Feriado = {
+        name: recessoNome,
+        date: recessoData.toISOString().split("T")[0],
+      };
+
+      setFeriados((prev) => [...prev, novoFeriado]);
+      setRecessos((prev) => [...prev, novoFeriado]);
+    }
+
+    CloseAdicionarRecesso();
   };
 
   const handleRecessoChange = (date: Date) => {
