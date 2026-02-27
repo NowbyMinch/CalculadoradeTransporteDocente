@@ -7,6 +7,7 @@ import ValidationPopup from "@/components/ValidationPopup";
 import { NumericFormat } from "react-number-format";
 import { useFeriados } from "@/contexts/FeriadosContext";
 import Image from "next/image";
+import { getMonth } from "date-fns";
 
 const days = [
   "domingo",
@@ -180,21 +181,20 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-  if (!inicio || !fim) {
-    setFeriadosNoPeriodo([]);
-    setAlgumFeriado(false);
-    return;
-  }
+    if (!inicio || !fim) {
+      setFeriadosNoPeriodo([]);
+      setAlgumFeriado(false);
+      return;
+    }
 
-  const filtrados = feriados.filter((feriado) => {
-    const dataFeriado = new Date(feriado.date);
-    return dataFeriado >= inicio && dataFeriado <= fim;
-  });
+    const filtrados = feriados.filter((feriado) => {
+      const dataFeriado = new Date(feriado.date);
+      return dataFeriado >= inicio && dataFeriado <= fim;
+    });
 
-  setFeriadosNoPeriodo(filtrados);
-  setAlgumFeriado(filtrados.length > 0);
-
-}, [inicio, fim, feriados]);
+    setFeriadosNoPeriodo(filtrados);
+    setAlgumFeriado(filtrados.length > 0);
+  }, [inicio, fim, feriados]);
 
   useEffect(() => {
     if (!inicio || !fim) return;
@@ -324,15 +324,25 @@ export default function Home() {
                 className="ml-auto min-h-fit size-7 cursor-pointer"
               />
               {feriadosNoPeriodo.map((feriado, i) => {
+                const month = new Date(feriado.date).toLocaleString("pt-br", {
+                  month: "short",
+                });
+
                 return (
                   <div
                     key={i}
-                    className="flex w-full min-h-15 border  border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                    className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
                   >
-                    <div className="w-15 h-full flex justify-center items-center  ">
-                      <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
-                        {feriado.date.split("-")[2]}
+                    <div className="min-w-15 h-full flex justify-center items-center  ">
+                      <div className="flex flex-col w-full h-full rounded-bl-2xl rounded-tl-2xl  justify-center ">
+                        <div className="text-[rgba(255,208,69,1)] text-[30px] font-semibold text-center leading-none ">
+                          {feriado.date.split("-")[2]}
+                        </div>
+                        <div className="text-[rgba(255,208,69,1)] text-[18px] font-semibold text-center leading-none ">
+                          {month.replace(".", "")}
+                        </div>
                       </div>
+                      
                       <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
                     </div>
 
@@ -790,7 +800,9 @@ export default function Home() {
                 </div>
                 <span className="text-black">Total de dias: {totalDias}</span>
                 <span className="text-black mx-2">|</span>
-                <span className="text-black">Dias trabalhados: {diasContados}</span>
+                <span className="text-black">
+                  Dias trabalhados: {diasContados}
+                </span>
                 <span className="text-black mx-2">|</span>
                 <span className="text-black">Feriados: {feriadosContados}</span>
               </div>
@@ -825,18 +837,28 @@ export default function Home() {
                   {algumFeriado ? (
                     feriadosNoPeriodo.map((feriado, i) => {
                       if (i < 3) {
+                        const month = new Date(feriado.date).toLocaleString(
+                          "pt-br",
+                          { month: "short" },
+                        );
+
                         return (
                           <div
                             key={i}
                             className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
                           >
                             <div className="min-w-15 h-full flex justify-center items-center  ">
-                              <div className="text-[rgba(255,208,69,1)] w-full  h-full text-[30px] font-semibold flex items-center justify-center text-center leading-none ">
-                                {feriado.date.split("-")[2]}
+                              <div className="flex flex-col w-full h-full rounded-bl-2xl rounded-tl-2xl  justify-center ">
+                                <div className="text-[rgba(255,208,69,1)] text-[30px] font-semibold text-center leading-none ">
+                                  {feriado.date.split("-")[2]}
+                                </div>
+                                <div className="text-[rgba(255,208,69,1)] text-[18px] font-semibold text-center leading-none ">
+                                  {month.replace(".", "")}
+                                </div>
                               </div>
+
                               <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
                             </div>
-
                             <span className="line-clamp-2 ">
                               {feriado.name}
                             </span>
