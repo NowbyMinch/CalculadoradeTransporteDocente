@@ -557,7 +557,7 @@ export default function Home() {
                 <div className="flex gap-3 w-full ">
                   <div className="flex flex-col gap-2 w-[50%]">
                     <label className="text-[rgba(26,26,26,1)] text-[18px] ">
-                      Valor hora/aula: {parseFloat(horaAula.replace(",",".")) * diasContados * range}
+                      Valor hora/aula: 
                     </label>
                     <NumericFormat
                       prefix="R$ "
@@ -590,7 +590,7 @@ export default function Home() {
 
                         <input
                           type="range"
-                          className="relative w-full appearance-none mt-1 z-10"
+                          className="relative w-full appearance-none mt-1 "
                           min={1}
                           max={24}
                           value={range}
