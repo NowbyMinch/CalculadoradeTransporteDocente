@@ -60,6 +60,8 @@ export default function Home() {
   const [recessos, setRecessos] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
   const [adicionarRecesso, setAdicionarRecesso] = useState(false);
+  const [range, setRange] = useState(0);
+  const [horaAula, setHoraAula] = useState("0");
 
   function CloseAdicionarRecesso() {
     setAdicionarRecesso(false);
@@ -113,11 +115,12 @@ export default function Home() {
           .replace(",", "."),
       );
 
-      total += (passagens[i] ?? 0) * valorNumerico;
+      total += (passagens[i] ?? 0) * valorNumerico + (parseInt(horaAula) * range);
     }
 
     setPreco(total * diasContados);
   }
+
   function contarDiasSelecionadosSemFeriados(
     inicio: Date,
     fim: Date,
@@ -158,6 +161,7 @@ export default function Home() {
     setDiasContados(total);
     return total;
   }
+
   useEffect(() => {
     const buscar = async () => {
       try {
@@ -342,7 +346,7 @@ export default function Home() {
                           {month.replace(".", "")}
                         </div>
                       </div>
-                      
+
                       <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
                     </div>
 
@@ -547,20 +551,58 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
-                {/* <div className="flex flex-row gap-3">
-                  <div className="w-[50%] flex flex-col">
-                    <label className="text-[rgba(26,26,26,1)] text-[18px]">
-                      Valor hora/aula:
-                    </label>
-                    <input type="range" className="w-full h-1.5  accent-[#f0c15b]" />
-                  </div>
-                  <div className="w-[50%]">
-                    <label className="text-[rgba(26,26,26,1)] text-[18px]">
-                      Valor hora/aula:
-                    </label>
-                  </div>
 
-                </div> */}
+                
+
+                <div className="flex gap-3 w-full ">
+                  <div className="flex flex-col gap-2 w-[50%]">
+                    <label className="text-[rgba(26,26,26,1)] text-[18px] ">
+                      Valor hora/aula: {parseFloat(horaAula.replace(",",".")) * diasContados * range}
+                    </label>
+                    <NumericFormat
+                      prefix="R$ "
+                      placeholder="R$ 0,00"
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      decimalScale={2}
+                      fixedDecimalScale
+                      onValueChange={(e) => { setHoraAula(e.formattedValue.replace("R$", "")); if (e.formattedValue === "") {setHoraAula("0")}}}
+                      className="border-gray-400  w-46 p-2.5 h-12 rounded-[15px] border focus:outline-1"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 w-[50%] ">
+                    <label className="text-[rgba(26,26,26,1)] text-[18px] ">
+                      Horas por dia
+                    </label>
+
+                    {/* RANGE ------------------------------------------------- */}
+
+                    <div className="border-gray-400 w-full p-2.5 h-12 rounded-[15px] border focus:outline-1 flex items-center gap-1">
+                      <div className="relative flex-1 ">
+                        {/* Linha cinza */}
+                        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-zinc-300 rounded-full" />
+
+                        {/* Parte amarela preenchida */}
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 h-1 bg-yellow-400 rounded-full"
+                          style={{ width: `100%` }}
+                        />
+
+                        <input
+                          type="range"
+                          className="relative w-full appearance-none mt-1 z-10"
+                          min={1}
+                          max={24}
+                          value={range}
+                          onChange={(e) => {
+                            setRange(Number(e.target.value));
+                          }}
+                        />
+                      </div>
+                      {range}h
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[rgba(26,26,26,1)] text-[18px]">
@@ -631,7 +673,7 @@ export default function Home() {
                 {Array.from({ length: ativos }).map((_, i) => (
                   <div key={i} className="flex gap-3  PeriodoEscolar">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[18px]">Passagens </label>
+                      <label className="text-[18px]">Passagens</label>
                       <input
                         type="number"
                         min={0}
@@ -645,7 +687,7 @@ export default function Home() {
                               : Number(e.target.value);
                           setPassagens(novo);
                         }}
-                        className="border-gray-400 w-46 max-w-full p-2.5 h-12 rounded-[15px] border"
+                        className="border-gray-400 w-46 max-w-full p-2.5 h-12 rounded-[15px] border focus:outline-1"
                       />
                     </div>
 
@@ -664,7 +706,7 @@ export default function Home() {
                           novo[i] = values.formattedValue;
                           setValores(novo);
                         }}
-                        className="border-gray-400 max-w-44 p-2.5 h-12 rounded-[15px] border"
+                        className="border-gray-400 max-w-44 p-2.5 h-12 rounded-[15px] border focus:outline-1"
                       />
                     </div>
                   </div>
