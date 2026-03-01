@@ -29,7 +29,6 @@ export function DatePicker({
   onChange,
   selected,
 }: DatePickerProps) {
-  const { feriados, setFeriados } = useFeriados();
   const pathname = usePathname();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showPicker, setShowPicker] = useState(false);
@@ -77,15 +76,7 @@ export function DatePicker({
       const [year, month, day] = selected.split("-");
       setInputValue(day);
       setInputValue2(month);
-      if (parseInt(year) > new Date().getFullYear()) {
-        if (new Date().getFullYear() !== undefined) {
-          setInputValue3(new Date().getFullYear().toString());
-        }
-      } else if (parseInt(year) < new Date().getFullYear()) {
-        setInputValue3(new Date().getFullYear().toString());
-      } else {
-        setInputValue3(year);
-      }
+      setInputValue3(year);
       // const typedDate = parse(
       //   `${inputValue3}-${inputValue2}-${inputValue}`,
       //   "yyyy-MM-dd",
@@ -185,7 +176,7 @@ export function DatePicker({
   const currentYear = new Date().getFullYear();
 
   const handleDateSelect = (date: Date) => {
-    if (date.getFullYear() < 1900 || date.getFullYear() > currentYear) return;
+    if (date.getFullYear() < 1900) return;
     const formatted = format(date, "dd/MM/yyyy");
     setSelectedDate(date);
     setInputValue(formatted.slice(0, 2));
@@ -776,17 +767,11 @@ export function CalendarRecesso({
   }, [inputValue2]);
 
   useEffect(() => {
-    if (parseInt(inputValue3) > new Date().getFullYear()) {
-      if (new Date().getFullYear() !== undefined) {
-        setInputValue3(new Date().getFullYear().toString());
-      }
-    } else {
-      if (inputValue3.length === 4) {
-        ValueRef3.current?.blur();
-        setInputValue3(inputValue3.slice(0, 4));
-        if (parseInt(inputValue3) < 1901) {
-          setInputValue3("1900");
-        }
+    if (inputValue3.length === 4) {
+      ValueRef3.current?.blur();
+
+      if (parseInt(inputValue3) < 1900) {
+        setInputValue3("1900");
       }
     }
   }, [inputValue3]);
@@ -802,9 +787,9 @@ export function CalendarRecesso({
   const handleDateSelect = (date: Date) => {
     isSelectingFromCalendar.current = true;
 
-    if (date.getFullYear() < 1900 || date.getFullYear() > currentYear) return;
+    if (date.getFullYear() < 1900 ) return;
     const formatted = format(date, "dd/MM/yyyy");
-    setSelectedDate(date); 
+    setSelectedDate(date);
     setInputValue(formatted.slice(0, 2));
     setInputValue2(formatted.slice(3, 5));
     setInputValue3(formatted.slice(6, 10));
@@ -858,30 +843,30 @@ export function CalendarRecesso({
     setRecessos(newRecessos); // ✅ only ONE state update
   }, [inicio, fim]);
 
- useEffect(() => {
-  if (isSelectingFromCalendar.current) {
-    isSelectingFromCalendar.current = false;
-    return;
-  }
-
-  if (
-    inputValue.length === 2 &&
-    inputValue2.length === 2 &&
-    inputValue3.length === 4
-  ) {
-    const typedDate = parse(
-      `${inputValue3}-${inputValue2}-${inputValue}`,
-      "yyyy-MM-dd",
-      new Date(),
-    );
-
-    if (isValid(typedDate)) {
-      setCalendarMonth(typedDate);
-      setSelectedDate(typedDate);
-      onChange(typedDate);
+  useEffect(() => {
+    if (isSelectingFromCalendar.current) {
+      isSelectingFromCalendar.current = false;
+      return;
     }
-  }
-}, [inputValue, inputValue2, inputValue3]);
+
+    if (
+      inputValue.length === 2 &&
+      inputValue2.length === 2 &&
+      inputValue3.length === 4
+    ) {
+      const typedDate = parse(
+        `${inputValue3}-${inputValue2}-${inputValue}`,
+        "yyyy-MM-dd",
+        new Date(),
+      );
+
+      if (isValid(typedDate)) {
+        setCalendarMonth(typedDate);
+        setSelectedDate(typedDate);
+        onChange(typedDate);
+      }
+    }
+  }, [inputValue, inputValue2, inputValue3]);
 
   return (
     <div className="relative  ">

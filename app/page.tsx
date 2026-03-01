@@ -1,6 +1,6 @@
 "use client";
 import { Calendar, CalendarRecesso, DatePicker } from "@/components/DatePicker";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BusFront, ChevronDown, TrainFront, TramFront, X } from "lucide-react";
 import ValidationPopup from "@/components/ValidationPopup";
@@ -38,8 +38,8 @@ type Feriado = {
 
 export default function Home() {
   const { feriados, setFeriados } = useFeriados();
-  const [inicio, setInicio] = useState<Date | null>();
-  const [fim, setFim] = useState<Date | null>();
+  const [inicio, setInicio] = useState<Date | null>(null);
+  const [fim, setFim] = useState<Date | null>(null);
   const [passagens, setPassagens] = useState<Array<number | undefined>>([]);
   const [valores, setValores] = useState<string[]>([]);
   const [diasContados, setDiasContados] = useState<number>(0);
@@ -53,15 +53,20 @@ export default function Home() {
   const [ativos, setAtivos] = useState(0);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [algumFeriado, setAlgumFeriado] = useState(false);
-  const [feriadosNoPeriodo, setFeriadosNoPeriodo] = useState<Array<Feriado>>(
-    [],
-  );
+  // const [algumFeriado, setAlgumFeriado] = useState(false);
+  // const [feriadosNoPeriodo, setFeriadosNoPeriodo] = useState<Array<Feriado>>(
+  //   [],
+  // );
   const [recessos, setRecessos] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
   const [adicionarRecesso, setAdicionarRecesso] = useState(false);
   const [range, setRange] = useState(0);
   const [horaAula, setHoraAula] = useState("0");
+  const [recessoNome, setRecessoNome] = useState<string>("");
+  const [recessoData, setRecessoData] = useState<Date>();
+  const [recessoDataFinal, setRecessoDataFinal] = useState<Date>();
+  const dateReselectionHandler = useRef<Date | null>(null);
+  const cacheFeriados = useRef<Record<number, Feriado[]>>({});
 
   function CloseAdicionarRecesso() {
     setAdicionarRecesso(false);
@@ -75,12 +80,6 @@ export default function Home() {
     setRecessoDataFinal(undefined);
     setRecessoNome("");
   }
-
-  const [recessoNome, setRecessoNome] = useState<string>("");
-  const [recessoData, setRecessoData] = useState<Date>();
-  const [recessoDataFinal, setRecessoDataFinal] = useState<Date>();
-
-  const dateReselectionHandler = useRef<Date | null>(null);
 
   useEffect(() => {
     let count = 0;
@@ -108,14 +107,9 @@ export default function Home() {
     let total = 0;
 
     for (let i = 0; i < ativos; i++) {
-      const valorNumerico = parseFloat(
-        (valores[i] || "0")
-          .replace(/[R$ ]/g, "")
-          .replace(".", "")
-          .replace(",", "."),
-      );
+      const valorNumerico = parseBRL(valores[i]);
 
-      total += (passagens[i] ?? 0) * valorNumerico + (parseInt(horaAula) * range);
+      total += (passagens[i] ?? 0) * valorNumerico + parseInt(horaAula) * range;
     }
 
     setPreco(total * diasContados);
@@ -134,7 +128,9 @@ export default function Home() {
     const dataAtual = new Date(inicio);
 
     while (dataAtual <= fim) {
-      const dataISO = dataAtual.toISOString().split("T")[0];
+      const dataISO = `${dataAtual.getFullYear()}-${String(
+        dataAtual.getMonth() + 1,
+      ).padStart(2, "0")}-${String(dataAtual.getDate()).padStart(2, "0")}`;
 
       const diaIndex = dataAtual.getDay(); // 0 a 6
       const diaNome = days[diaIndex]; // "segunda", "terça", etc
@@ -163,42 +159,83 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const buscar = async () => {
+    const buscarFeriados = async () => {
+      if (!inicio || !fim) return;
+
+      const anoInicio = inicio.getFullYear();
+      const anoFim = fim.getFullYear();
+
+      const anos: number[] = [];
+      for (let ano = anoInicio; ano <= anoFim; ano++) {
+        anos.push(ano);
+      }
+
       try {
-        const res = await fetch(
-          `https://brasilapi.com.br/api/feriados/v1/${new Date().getFullYear()}`,
+        // 🔥 Separa anos já em cache e anos que precisam buscar
+        const anosParaBuscar = anos.filter(
+          (ano) => !cacheFeriados.current[ano],
         );
 
-        if (!res.ok) {
-          console.error("Erro HTTP:", res.status);
-          return;
+        // 🔥 Busca apenas os que ainda não estão no cache
+        if (anosParaBuscar.length > 0) {
+          const responses = await Promise.all(
+            anosParaBuscar.map((ano) =>
+              fetch(`https://brasilapi.com.br/api/feriados/v1/${ano}`),
+            ),
+          );
+
+          const datas = await Promise.all(responses.map((r) => r.json()));
+
+          // 🔥 Salva cada ano no cache
+          anosParaBuscar.forEach((ano, index) => {
+            cacheFeriados.current[ano] = datas[index];
+          });
         }
 
-        const data = await res.json();
-        setFeriados(data);
+        // 🔥 Junta todos os anos (cache + novos)
+        const todosFeriados = anos.flatMap((ano) => cacheFeriados.current[ano]);
+
+        setFeriados(todosFeriados);
       } catch (err) {
         console.error("Erro ao buscar feriados:", err);
       }
     };
 
-    buscar();
-  }, []);
+    buscarFeriados();
+  }, [inicio, fim]);
 
-  useEffect(() => {
-    if (!inicio || !fim) {
-      setFeriadosNoPeriodo([]);
-      setAlgumFeriado(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!inicio || !fim) {
+  //     setFeriadosNoPeriodo([]);
+  //     setAlgumFeriado(false);
+  //     return;
+  //   }
 
-    const filtrados = feriados.filter((feriado) => {
+  //   const filtrados = feriados.filter((feriado) => {
+  //     const dataFeriado = new Date(feriado.date);
+  //     return dataFeriado >= inicio && dataFeriado <= fim;
+  //   });
+
+  //   setFeriadosNoPeriodo(filtrados);
+  //   setAlgumFeriado(filtrados.length > 0);
+  // }, [inicio, fim, feriados]);
+
+  const feriadosNoPeriodo = useMemo(() => {
+    if (!inicio || !fim) return [];
+
+    return feriados.filter((feriado) => {
       const dataFeriado = new Date(feriado.date);
       return dataFeriado >= inicio && dataFeriado <= fim;
     });
-
-    setFeriadosNoPeriodo(filtrados);
-    setAlgumFeriado(filtrados.length > 0);
   }, [inicio, fim, feriados]);
+
+  const algumFeriado = feriadosNoPeriodo.length > 0;
+
+  function parseBRL(value: string) {
+    return parseFloat(
+      value.replace(/[R$ ]/g, "").replace(".", "").replace(",", "."),
+    );
+  }
 
   useEffect(() => {
     if (!inicio || !fim) return;
@@ -211,12 +248,7 @@ export default function Home() {
     for (let i = 0; i < ativos; i++) {
       if (!passagens[i] || passagens[i]! <= 0) return;
 
-      const valorNumerico = parseFloat(
-        (valores[i] || "0")
-          .replace(/[R$ ]/g, "")
-          .replace(".", "")
-          .replace(",", "."),
-      );
+      const valorNumerico = parseBRL(valores[i]);
 
       if (isNaN(valorNumerico) || valorNumerico <= 0) return;
     }
@@ -328,7 +360,8 @@ export default function Home() {
                 className="ml-auto min-h-fit size-7 cursor-pointer"
               />
               {feriadosNoPeriodo.map((feriado, i) => {
-                const month = new Date(feriado.date).toLocaleString("pt-br", {
+                console.log(new Date(feriado.date).toLocaleDateString())
+                const month = new Date(feriado.date + "T00:00:00").toLocaleString("pt-br", {
                   month: "short",
                 });
 
@@ -552,12 +585,10 @@ export default function Home() {
                   </div>
                 </div>
 
-                
-
                 <div className="flex gap-3 w-full ">
                   <div className="flex flex-col gap-2 w-[50%]">
                     <label className="text-[rgba(26,26,26,1)] text-[18px] ">
-                      Valor hora/aula: 
+                      Valor hora/aula:
                     </label>
                     <NumericFormat
                       prefix="R$ "
@@ -566,7 +597,12 @@ export default function Home() {
                       decimalSeparator=","
                       decimalScale={2}
                       fixedDecimalScale
-                      onValueChange={(e) => { setHoraAula(e.formattedValue.replace("R$", "")); if (e.formattedValue === "") {setHoraAula("0")}}}
+                      onValueChange={(e) => {
+                        setHoraAula(e.formattedValue.replace("R$", ""));
+                        if (e.formattedValue === "") {
+                          setHoraAula("0");
+                        }
+                      }}
                       className="border-gray-400  w-46 p-2.5 h-12 rounded-[15px] border focus:outline-1"
                     />
                   </div>
@@ -585,7 +621,7 @@ export default function Home() {
                         {/* Parte amarela preenchida */}
                         <div
                           className="absolute top-1/2 -translate-y-1/2 h-1 bg-yellow-400 rounded-full"
-                          style={{ width: `100%` }}
+                          style={{ width: `${(range / 24) * 100}%` }}
                         />
 
                         <input
@@ -765,12 +801,7 @@ export default function Home() {
                         return;
                       }
 
-                      const valorNumerico = parseFloat(
-                        (valores[i] || "0")
-                          .replace(/[R$ ]/g, "")
-                          .replace(".", "")
-                          .replace(",", "."),
-                      );
+                      const valorNumerico = parseBRL(valores[i]);
 
                       if (isNaN(valorNumerico) || valorNumerico <= 0) {
                         setAlertMessage(
@@ -877,36 +908,32 @@ export default function Home() {
                   </label>
 
                   {algumFeriado ? (
-                    feriadosNoPeriodo.map((feriado, i) => {
-                      if (i < 3) {
-                        const month = new Date(feriado.date).toLocaleString(
-                          "pt-br",
-                          { month: "short" },
-                        );
+                    feriadosNoPeriodo.slice(0, 3).map((feriado, i) => {
+                      const month = new Date(feriado.date + "T00:00:00").toLocaleString(
+                        "pt-br",
+                        { month: "short" },
+                      );
 
-                        return (
-                          <div
-                            key={i}
-                            className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
-                          >
-                            <div className="min-w-15 h-full flex justify-center items-center  ">
-                              <div className="flex flex-col w-full h-full rounded-bl-2xl rounded-tl-2xl  justify-center ">
-                                <div className="text-[rgba(255,208,69,1)] text-[30px] font-semibold text-center leading-none ">
-                                  {feriado.date.split("-")[2]}
-                                </div>
-                                <div className="text-[rgba(255,208,69,1)] text-[18px] font-semibold text-center leading-none ">
-                                  {month.replace(".", "")}
-                                </div>
+                      return (
+                        <div
+                          key={i}
+                          className="flex w-full max-w-120 h-15 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3"
+                        >
+                          <div className="min-w-15 h-full flex justify-center items-center  ">
+                            <div className="flex flex-col w-full h-full rounded-bl-2xl rounded-tl-2xl  justify-center ">
+                              <div className="text-[rgba(255,208,69,1)] text-[30px] font-semibold text-center leading-none ">
+                                {feriado.date.split("-")[2]}
                               </div>
-
-                              <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
+                              <div className="text-[rgba(255,208,69,1)] text-[18px] font-semibold text-center leading-none ">
+                                {month.replace(".", "")}
+                              </div>
                             </div>
-                            <span className="line-clamp-2 ">
-                              {feriado.name}
-                            </span>
+
+                            <span className="h-full w-px bg-[rgba(0,0,0,0.21)]"></span>
                           </div>
-                        );
-                      }
+                          <span className="line-clamp-2 ">{feriado.name}</span>
+                        </div>
+                      );
                     })
                   ) : (
                     <div className="flex w-full max-w-120 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3  flex-col justify-center  p-5 ">
