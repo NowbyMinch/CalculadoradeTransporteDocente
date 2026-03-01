@@ -359,7 +359,7 @@ export function DatePicker({
               </div>
 
               {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-1  text-sm text-[#ffffffc7]">
+              <div className="grid grid-cols-7 gap-1 text-sm text-[#ffffffc7]">
                 {generateCalendar().map((day, i) => {
                   const isSelected =
                     selectedDate && isSameDay(day, selectedDate);
@@ -565,12 +565,12 @@ export function Calendar({ onChangePreset, onChange }: DatePickerProps) {
   }, [inputValue, inputValue2, inputValue3, onChange]);
 
   return (
-    <div className="relative max-w-120">
+    <div className="relative max-w-100">
       <motion.div
         id="date-box"
         className=" right-0 z-10 w-full rounded-[25px] shadow-xl origin-top-right"
       >
-        <div ref={ref} className=" rounded-[25px] p-4 bg-[#f7f7f7]">
+        <div ref={ref} className="rounded-[25px] p-4 bg-[#f7f7f7] min-h-80 w-100">
           {/* Calendar Header */}
           <div className="mb-3 flex items-center justify-between px-2  text-[rgba(215,171,42,1)] ">
             <button
