@@ -2,7 +2,18 @@
 import { Calendar, CalendarRecesso, DatePicker } from "@/components/DatePicker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { BusFront, ChevronDown, TrainFront, TramFront, X, FileText, BarChart3, Printer } from "lucide-react";
+import { pdf } from "@react-pdf/renderer";
+import { BoletoTransportePDF } from "@/components/BoletoTransportePDF";
+import {
+  BusFront,
+  ChevronDown,
+  TrainFront,
+  TramFront,
+  X,
+  FileText,
+  BarChart3,
+  Printer,
+} from "lucide-react";
 import ValidationPopup from "@/components/ValidationPopup";
 import dynamic from "next/dynamic";
 import { NumericFormat } from "react-number-format";
@@ -10,7 +21,10 @@ import { useFeriados } from "@/contexts/FeriadosContext";
 import Image from "next/image";
 import { getMonth } from "date-fns";
 
-const BoletoTransportePDF = dynamic(() => import("@/components/BoletoTransportePDF"), { ssr: false });
+// const BoletoTransportePDF = dynamic(
+//   () => import("@/components/BoletoTransportePDF"),
+//   { ssr: false },
+// );
 
 const days = [
   "domingo",
@@ -63,7 +77,7 @@ export default function Home() {
   const [recessos, setRecessos] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
   const [adicionarRecesso, setAdicionarRecesso] = useState(false);
-  const [mostrarBoleto, setMostrarBoleto] = useState(false);
+  const [mostrarBoleto, setModstrarBoleto] = useState(false);
   const boletoRef = useRef<HTMLDivElement>(null);
   const [range, setRange] = useState(0);
   const [horaAula, setHoraAula] = useState("0");
@@ -76,11 +90,9 @@ export default function Home() {
   function CloseAdicionarRecesso() {
     setAdicionarRecesso(false);
 
-    // ❌ NÃO mexer no período escolar
     // setInicio(null);
     // setFim(null);
 
-    // ✅ Só limpar os dados do recesso
     setRecessoData(undefined);
     setRecessoDataFinal(undefined);
     setRecessoNome("");
@@ -176,12 +188,10 @@ export default function Home() {
       }
 
       try {
-        // 🔥 Separa anos já em cache e anos que precisam buscar
         const anosParaBuscar = anos.filter(
           (ano) => !cacheFeriados.current[ano],
         );
 
-        // 🔥 Busca apenas os que ainda não estão no cache
         if (anosParaBuscar.length > 0) {
           const responses = await Promise.all(
             anosParaBuscar.map((ano) =>
@@ -191,13 +201,11 @@ export default function Home() {
 
           const datas = await Promise.all(responses.map((r) => r.json()));
 
-          // 🔥 Salva cada ano no cache
           anosParaBuscar.forEach((ano, index) => {
             cacheFeriados.current[ano] = datas[index];
           });
         }
 
-        // 🔥 Junta todos os anos (cache + novos)
         const todosFeriados = anos.flatMap((ano) => cacheFeriados.current[ano]);
 
         setFeriados(todosFeriados);
@@ -208,22 +216,6 @@ export default function Home() {
 
     buscarFeriados();
   }, [inicio, fim]);
-
-  // useEffect(() => {
-  //   if (!inicio || !fim) {
-  //     setFeriadosNoPeriodo([]);
-  //     setAlgumFeriado(false);
-  //     return;
-  //   }
-
-  //   const filtrados = feriados.filter((feriado) => {
-  //     const dataFeriado = new Date(feriado.date);
-  //     return dataFeriado >= inicio && dataFeriado <= fim;
-  //   });
-
-  //   setFeriadosNoPeriodo(filtrados);
-  //   setAlgumFeriado(filtrados.length > 0);
-  // }, [inicio, fim, feriados]);
 
   const feriadosNoPeriodo = useMemo(() => {
     if (!inicio || !fim) return [];
@@ -249,7 +241,6 @@ export default function Home() {
 
     if (Object.values(week).every((v) => !v)) return;
 
-    // Verifica se os transportes estão preenchidos corretamente
     for (let i = 0; i < ativos; i++) {
       if (!passagens[i] || passagens[i]! <= 0) return;
 
@@ -262,16 +253,6 @@ export default function Home() {
 
     calcularPreco(dias);
   }, [inicio, fim, week, feriados, ativos, passagens, valores]);
-
-  // useEffect(() => {
-  //   let atual = new Date().getTime();
-  //   let depois = new Date("2026-02-22").getTime();
-
-  //   while (atual < depois) {
-  //     console.log(new Date(atual));
-  //     atual += 1000 * 60 * 60 * 24; // Avança um dia
-  //   }
-  // }, []);
 
   const adicionar = () => {
     if (recessoNome.trim() === "" || !recessoData) {
@@ -288,7 +269,6 @@ export default function Home() {
       return;
     }
 
-    // 🔥 Se tiver período
     if (recessoDataFinal) {
       const dataAtual = new Date(recessoData);
 
@@ -303,9 +283,7 @@ export default function Home() {
 
         dataAtual.setDate(dataAtual.getDate() + 1);
       }
-    }
-    // 🔥 Se for só um dia
-    else {
+    } else {
       const novoFeriado: Feriado = {
         name: recessoNome,
         date: recessoData.toISOString().split("T")[0],
@@ -319,8 +297,6 @@ export default function Home() {
   };
 
   const handleRecessoChange = (date: Date) => {
-    // if the setRecessoDataFinal is greater than the setRecessoData is inverts the date values;
-
     if (!recessoData) {
       setRecessoData(date);
       dateReselectionHandler.current = date;
@@ -344,12 +320,68 @@ export default function Home() {
       }
       return;
     }
+  };
 
-    // else {
-    //   // Reset and start again
-    //   setRecessoData(date);
-    //   setRecessoDataFinal(undefined);
-    // }
+  const handleExportarPDF = async () => {
+    if (!inicio || !fim) return;
+
+    const blob = await pdf(
+      <BoletoTransportePDF
+        inicio={inicio}
+        fim={fim}
+        totalDias={totalDias}
+        diasContados={diasContados}
+        feriadosContados={feriadosContados}
+        preco={preco}
+        transportes={
+          [bus, train, tram]
+            .map((_, i) => {
+              if (i === 0 && bus)
+                return {
+                  name: "Ônibus",
+                  passagens: passagens[0] || 0,
+                  valor: valores[0] || "R$ 0,00",
+                };
+              if (i === 1 && train)
+                return {
+                  name: "Trem",
+                  passagens: passagens[bus ? 1 : 0] || 0,
+                  valor: valores[bus ? 1 : 0] || "R$ 0,00",
+                };
+              if (i === 2 && tram)
+                return {
+                  name: "Metrô",
+                  passagens: passagens[bus && train ? 2 : train ? 1 : 0] || 0,
+                  valor: valores[bus && train ? 2 : train ? 1 : 0] || "R$ 0,00",
+                };
+              return null;
+            })
+            .filter((t) => t !== null) as Array<{
+            name: string;
+            passagens: number;
+            valor: string;
+          }>
+        }
+        feriados={feriados}
+        recessos={recessos}
+        week={week}
+      />,
+    ).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "boleto-transporte.pdf";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // 🔥 aguarda antes de revogar
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
   };
 
   return (
@@ -365,8 +397,10 @@ export default function Home() {
                 className="ml-auto min-h-fit size-7 cursor-pointer"
               />
               {feriadosNoPeriodo.map((feriado, i) => {
-                console.log(new Date(feriado.date).toLocaleDateString())
-                const month = new Date(feriado.date + "T00:00:00").toLocaleString("pt-br", {
+                console.log(new Date(feriado.date).toLocaleDateString());
+                const month = new Date(
+                  feriado.date + "T00:00:00",
+                ).toLocaleString("pt-br", {
                   month: "short",
                 });
 
@@ -908,10 +942,9 @@ export default function Home() {
 
                   {algumFeriado ? (
                     feriadosNoPeriodo.slice(0, 3).map((feriado, i) => {
-                      const month = new Date(feriado.date + "T00:00:00").toLocaleString(
-                        "pt-br",
-                        { month: "short" },
-                      );
+                      const month = new Date(
+                        feriado.date + "T00:00:00",
+                      ).toLocaleString("pt-br", { month: "short" });
 
                       return (
                         <div
@@ -951,17 +984,18 @@ export default function Home() {
                         onClick={() => {
                           setVerMais(true);
                         }}
-                      
-                        className="cursor-pointer self-center mt-1 text-sm">
-                        Ver todos os feriados e recessos ({feriadosNoPeriodo.length})
+                        className="cursor-pointer self-center mt-1 text-sm"
+                      >
+                        Ver todos os feriados e recessos (
+                        {feriadosNoPeriodo.length})
                       </motion.button>
                     </div>
                   )}
 
-              <label className="text-[rgba(26,26,26,1)] text-[18px] mt-2">
-                Recessos:
-              </label>
-              
+                  <label className="text-[rgba(26,26,26,1)] text-[18px] mt-2">
+                    Recessos:
+                  </label>
+
                   <motion.button
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.02 }}
@@ -980,42 +1014,45 @@ export default function Home() {
               </div>
               {ativos > 0 && (
                 <div className="flex gap-3 flex-wrap justify-center">
-                    <motion.button
-                      initial={{ scale: 1 }}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setMostrarBoleto(true)}
-                      className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
-                    >
-                      <FileText className="size-5" />
-                      Exportar em PDF
-                    </motion.button>
-                    <motion.button
-                      initial={{ scale: 1 }}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
-                    >
-                      <BarChart3 className="size-5" />
-                      Exportar em CSV
-                    </motion.button>
-                    <motion.button
-                      initial={{ scale: 1 }}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
-                    >
-                      <Printer className="size-5" />
-                      Imprimir como PDF
-                    </motion.button>
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleExportarPDF()}
+                    className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
+                  >
+                    <FileText className="size-5" />
+                    Exportar em PDF
+                  </motion.button>
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
+                  >
+                    <BarChart3 className="size-5" />
+                    Exportar em CSV
+                  </motion.button>
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
+                  >
+                    <Printer className="size-5" />
+                    Imprimir como PDF
+                  </motion.button>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-      {mostrarBoleto && inicio && fim && (
-        <div ref={boletoRef} style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+      {/* {inicio && fim && (
+        <div
+          ref={boletoRef}
+          style={{ position: "absolute", left: "-9999px", top: "-9999px" }}
+        >
           <BoletoTransportePDF
             inicio={inicio}
             fim={fim}
@@ -1027,24 +1064,39 @@ export default function Home() {
               [bus, train, tram]
                 .map((_, i) => {
                   if (i === 0 && bus)
-                    return { name: "Ônibus", passagens: passagens[0] || 0, valor: valores[0] || "R$ 0,00" };
-                  if (i === 1 && train) return { name: "Trem", passagens: passagens[bus ? 1 : 0] || 0, valor: valores[bus ? 1 : 0] || "R$ 0,00" };
+                    return {
+                      name: "Ônibus",
+                      passagens: passagens[0] || 0,
+                      valor: valores[0] || "R$ 0,00",
+                    };
+                  if (i === 1 && train)
+                    return {
+                      name: "Trem",
+                      passagens: passagens[bus ? 1 : 0] || 0,
+                      valor: valores[bus ? 1 : 0] || "R$ 0,00",
+                    };
                   if (i === 2 && tram)
                     return {
                       name: "Metrô",
-                      passagens: passagens[bus && train ? 2 : train ? 1 : 0] || 0,
-                      valor: valores[bus && train ? 2 : train ? 1 : 0] || "R$ 0,00",
+                      passagens:
+                        passagens[bus && train ? 2 : train ? 1 : 0] || 0,
+                      valor:
+                        valores[bus && train ? 2 : train ? 1 : 0] || "R$ 0,00",
                     };
                   return null;
                 })
-                .filter((t) => t !== null) as Array<{ name: string; passagens: number; valor: string }>
+                .filter((t) => t !== null) as Array<{
+                name: string;
+                passagens: number;
+                valor: string;
+              }>
             }
             feriados={feriados}
             recessos={recessos}
             week={week}
           />
         </div>
-      )}
+      )} */}
       <ValidationPopup
         visible={alertVisible}
         message={alertMessage}

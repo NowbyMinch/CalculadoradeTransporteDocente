@@ -284,306 +284,395 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function BoletoTransportePDF(props: BoletoTransportePDFProps) {
-  useEffect(() => {
-    const parseValor = (valor: string): number => {
-      return parseFloat(valor.replace(/[R$ ]/g, "").replace(".", "").replace(",", ".")) || 0;
-    };
+export function BoletoTransportePDF(props: BoletoTransportePDFProps) {
+  const parseValor = (valor: string): number => {
+    return (
+      parseFloat(
+        valor.replace(/[R$ ]/g, "").replace(".", "").replace(",", "."),
+      ) || 0
+    );
+  };
 
-    const getMonthsBetween = () => {
-      const months: Array<{ year: number; month: number; name: string }> = [];
-      const current = new Date(props.inicio.getFullYear(), props.inicio.getMonth(), 1);
-      const endDate = new Date(props.fim.getFullYear(), props.fim.getMonth() + 1, 0);
+  const getMonthsBetween = () => {
+    const months: Array<{ year: number; month: number; name: string }> = [];
+    const current = new Date(
+      props.inicio.getFullYear(),
+      props.inicio.getMonth(),
+      1,
+    );
+    const endDate = new Date(
+      props.fim.getFullYear(),
+      props.fim.getMonth() + 1,
+      0,
+    );
 
-      while (current < endDate) {
-        const monthName = format(current, "MMMM yyyy", { locale: ptBR });
-        months.push({
-          year: current.getFullYear(),
-          month: current.getMonth(),
-          name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-        });
-        current.setMonth(current.getMonth() + 1);
-      }
-      return months;
-    };
+    while (current < endDate) {
+      const monthName = format(current, "MMMM yyyy", { locale: ptBR });
+      months.push({
+        year: current.getFullYear(),
+        month: current.getMonth(),
+        name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+    return months;
+  };
 
-    const isWithinRange = (date: Date) => {
-      return date >= props.inicio && date <= props.fim;
-    };
+  const isWithinRange = (date: Date) => {
+    return date >= props.inicio && date <= props.fim;
+  };
 
-    const weekDays = [
-      "domingo",
-      "segunda",
-      "terça",
-      "quarta",
-      "quinta",
-      "sexta",
-      "sabado",
-    ];
+  const weekDays = [
+    "domingo",
+    "segunda",
+    "terça",
+    "quarta",
+    "quinta",
+    "sexta",
+    "sabado",
+  ];
 
-    const isWorkedDay = (date: Date) => {
-      if (!isWithinRange(date)) return false;
-      const iso = date.toISOString().split("T")[0];
-      const isHoliday = props.feriados.some((f) => f.date === iso);
-      const isRecesso = props.recessos.some((r) => r.date === iso);
-      const dayName = weekDays[date.getDay()];
-      const trabalhaNesseDia = !!props.week?.[dayName];
-      return trabalhaNesseDia && !isHoliday && !isRecesso;
-    };
+  const isWorkedDay = (date: Date) => {
+    if (!isWithinRange(date)) return false;
+    const iso = date.toISOString().split("T")[0];
+    const isHoliday = props.feriados.some((f) => f.date === iso);
+    const isRecesso = props.recessos.some((r) => r.date === iso);
+    const dayName = weekDays[date.getDay()];
+    const trabalhaNesseDia = !!props.week?.[dayName];
+    return trabalhaNesseDia && !isHoliday && !isRecesso;
+  };
 
-    const calcularPassagensNoMes = (month: { year: number; month: number }) => {
-      const daysInMonth = getDaysInMonth(new Date(month.year, month.month));
-      let count = 0;
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(month.year, month.month, day);
-        if (isWorkedDay(date)) count++;
-      }
-      return count;
-    };
+  const calcularPassagensNoMes = (month: { year: number; month: number }) => {
+    const daysInMonth = getDaysInMonth(new Date(month.year, month.month));
+    let count = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(month.year, month.month, day);
+      if (isWorkedDay(date)) count++;
+    }
+    return count;
+  };
 
-    const calcularValorNoMes = (passagens: number) => {
-      if (!props.transportes || props.transportes.length === 0) return 0;
-      return props.transportes.reduce((sum, t) => {
-        const valorUnit = parseValor(t.valor || "0");
-        const qtdPassagens = t.passagens || 0;
-        return sum + passagens * qtdPassagens * valorUnit;
-      }, 0);
-    };
+  const calcularValorNoMes = (passagens: number) => {
+    if (!props.transportes || props.transportes.length === 0) return 0;
+    return props.transportes.reduce((sum, t) => {
+      const valorUnit = parseValor(t.valor || "0");
+      const qtdPassagens = t.passagens || 0;
+      return sum + passagens * qtdPassagens * valorUnit;
+    }, 0);
+  };
 
-    const months = getMonthsBetween();
-    const totalPassagensNoAno = months.reduce((acc, month) => acc + calcularPassagensNoMes(month), 0);
+  const months = getMonthsBetween();
+  const totalPassagensNoAno = months.reduce(
+    (acc, month) => acc + calcularPassagensNoMes(month),
+    0,
+  );
 
-    const generatePDF = async () => {
-      const blob = await pdf(
-        <Document>
-          <Page size="A4" style={styles.page}>
-            {/* Cabeçalho */}
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                  <Text style={styles.title}>Boleto de Transporte</Text>
-                  <Text style={styles.periodo}>
-                    Período: {format(props.inicio, "dd/MM/yyyy")} — {format(props.fim, "dd/MM/yyyy")}
-                  </Text>
-                  <Text style={[styles.periodo, { marginTop: 4 }]}>Dias trabalhados: {props.diasContados}</Text>
+  const generatePDF = async () => {
+    const blob = await pdf(
+     
+    ).toBlob();
+
+    // Download do PDF
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `boleto-transporte-${format(props.inicio, "dd-MM-yyyy")}.pdf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>Boleto de Transporte</Text>
+            <Text style={styles.periodo}>
+              Período: {format(props.inicio, "dd/MM/yyyy")} —{" "}
+              {format(props.fim, "dd/MM/yyyy")}
+            </Text>
+            <Text style={[styles.periodo, { marginTop: 4 }]}>
+              Dias trabalhados: {props.diasContados}
+            </Text>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.preco}>
+              {props.preco.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </Text>
+            <Text style={styles.precoLabel}>Pagamento estimado</Text>
+          </View>
+        </View>
+
+        {/* Detalhes + Resumo */}
+        <View style={styles.row}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Detalhes</Text>
+            <View style={styles.table}>
+              <View style={styles.tableRow}>
+                <Text>Data de Início</Text>
+                <Text>{format(props.inicio, "dd/MM/yyyy")}</Text>
               </View>
-              <View style={styles.headerRight}>
-                <Text style={styles.preco}>
-                  {props.preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </Text>
-                <Text style={styles.precoLabel}>Pagamento estimado</Text>
+              <View style={styles.tableRow}>
+                <Text>Data de Fim</Text>
+                <Text>{format(props.fim, "dd/MM/yyyy")}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text>Total dias</Text>
+                <Text>{props.totalDias}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text>Dias trabalhados</Text>
+                <Text>{props.diasContados}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text>Feriados</Text>
+                <Text>{props.feriadosContados}</Text>
               </View>
             </View>
+          </View>
 
-            {/* Detalhes + Resumo */}
-            <View style={styles.row}>
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Detalhes</Text>
-                <View style={styles.table}>
-                  <View style={styles.tableRow}>
-                    <Text>Data de Início</Text>
-                    <Text>{format(props.inicio, "dd/MM/yyyy")}</Text>
-                  </View>
-                  <View style={styles.tableRow}>
-                    <Text>Data de Fim</Text>
-                    <Text>{format(props.fim, "dd/MM/yyyy")}</Text>
-                  </View>
-                  <View style={styles.tableRow}>
-                    <Text>Total dias</Text>
-                    <Text>{props.totalDias}</Text>
-                  </View>
-                  <View style={styles.tableRow}>
-                    <Text>Dias trabalhados</Text>
-                    <Text>{props.diasContados}</Text>
-                  </View>
-                  <View style={styles.tableRow}>
-                    <Text>Feriados</Text>
-                    <Text>{props.feriadosContados}</Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={[styles.card, { width: 260 }]}>
-                <Text style={styles.cardTitle}>Resumo por transporte</Text>
-                <View style={styles.tableHeader}>
-                  <Text>Transporte</Text>
-                  <Text>Subtotal</Text>
-                </View>
-                {props.transportes.map((t) => {
-                  const subtotal = t.passagens * parseValor(t.valor) * props.diasContados;
-                  return (
-                    <View key={t.name} style={styles.tableRow}>
-                      <Text>
-                        {t.name} x {t.passagens}
-                      </Text>
-                      <Text>
-                        {subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </Text>
-                    </View>
-                  );
-                })}
-                <View style={styles.tableFooter}>
-                  <Text>Total</Text>
+          <View style={[styles.card, { width: 260 }]}>
+            <Text style={styles.cardTitle}>Resumo por transporte</Text>
+            <View style={styles.tableHeader}>
+              <Text>Transporte</Text>
+              <Text>Subtotal</Text>
+            </View>
+            {props.transportes.map((t) => {
+              const subtotal =
+                t.passagens * parseValor(t.valor) * props.diasContados;
+              return (
+                <View key={t.name} style={styles.tableRow}>
                   <Text>
-                    {props.preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {t.name} x {t.passagens}
+                  </Text>
+                  <Text>
+                    {subtotal.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </Text>
                 </View>
-              </View>
-            </View>
-
-            {/* Custos mensais */}
-            <View style={{ marginBottom: 16 }}>
-              <Text style={[styles.cardTitle, { fontSize: 12 }]}>Custos Mensais</Text>
-                <View style={[styles.table, {
-              borderStyle: "solid",
-        borderWidth: 1,
-        borderColor: "#eee",
-      }]}>
-                <View style={[styles.tableRow, { backgroundColor: "#f5f5f5" }]}>
-                  <Text style={{ width: "40%" }}>Mês</Text>
-                  <Text style={{ width: "20%", textAlign: "center" }}>Dias trabalhados</Text>
-                  <Text style={{ width: "20%", textAlign: "center" }}>Valor Unit. / Pass.</Text>
-                  <Text style={{ width: "20%", textAlign: "right" }}>Total</Text>
-                </View>
-                {months.map((month) => {
-                  const passagensNoMes = calcularPassagensNoMes(month);
-                  const valorNoMes = calcularValorNoMes(passagensNoMes);
-                  return (
-                    <View key={`${month.year}-${month.month}`} style={styles.tableRow}>
-                      <Text style={{ width: "40%" }}>{month.name}</Text>
-                      <Text style={{ width: "20%", textAlign: "center" }}>{passagensNoMes}</Text>
-                      <Text style={{ width: "20%", textAlign: "center" }}>
-                        {props.transportes && props.transportes.length > 0
-                          ? props.transportes.map((t) => `${t.name}: ${t.valor} × ${t.passagens}`).join("\n")
-                          : "R$ 0,00"}
-                      </Text>
-                      <Text style={{ width: "20%", textAlign: "right" }}>
-                        {valorNoMes.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </Text>
-                    </View>
-                  );
+              );
+            })}
+            <View style={styles.tableFooter}>
+              <Text>Total</Text>
+              <Text>
+                {props.preco.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
                 })}
-                <View style={[styles.tableRow, { fontWeight: 700, backgroundColor: "#f9f9f9" }]}>
-                  <Text style={{ width: "40%" }}>TOTAL</Text>
-                  <Text style={{ width: "20%", textAlign: "center" }}>{totalPassagensNoAno}</Text>
-                  <Text style={{ width: "20%", textAlign: "center" }}></Text>
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Custos mensais */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={[styles.cardTitle, { fontSize: 12 }]}>
+            Custos Mensais
+          </Text>
+          <View
+            style={[
+              styles.table,
+              {
+                borderStyle: "solid",
+                borderWidth: 1,
+                borderColor: "#eee",
+              },
+            ]}
+          >
+            <View style={[styles.tableRow, { backgroundColor: "#f5f5f5" }]}>
+              <Text style={{ width: "40%" }}>Mês</Text>
+              <Text style={{ width: "20%", textAlign: "center" }}>
+                Dias trabalhados
+              </Text>
+              <Text style={{ width: "20%", textAlign: "center" }}>
+                Valor Unit. / Pass.
+              </Text>
+              <Text style={{ width: "20%", textAlign: "right" }}>Total</Text>
+            </View>
+            {months.map((month) => {
+              const passagensNoMes = calcularPassagensNoMes(month);
+              const valorNoMes = calcularValorNoMes(passagensNoMes);
+              return (
+                <View
+                  key={`${month.year}-${month.month}`}
+                  style={styles.tableRow}
+                >
+                  <Text style={{ width: "40%" }}>{month.name}</Text>
+                  <Text style={{ width: "20%", textAlign: "center" }}>
+                    {passagensNoMes}
+                  </Text>
+                  <Text style={{ width: "20%", textAlign: "center" }}>
+                    {props.transportes && props.transportes.length > 0
+                      ? props.transportes
+                          .map((t) => `${t.name}: ${t.valor} × ${t.passagens}`)
+                          .join("\n")
+                      : "R$ 0,00"}
+                  </Text>
                   <Text style={{ width: "20%", textAlign: "right" }}>
-                    {props.preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {valorNoMes.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </Text>
                 </View>
-              </View>
-            </View>
-
-            {/* Calendário */}
-            <View style={styles.calendarioContainer}>
-              <Text style={[styles.cardTitle, { fontSize: 12 }]}>Calendário</Text>
-              <View style={styles.calendarioGrid}>
-                {months.map((m) => {
-                  const first = new Date(m.year, m.month, 1);
-                  const last = new Date(m.year, m.month + 1, 0);
-                  const daysInMonth = last.getDate();
-                  const monthName = format(first, "MMMM yyyy", { locale: ptBR }).replace(/^\w/, (c) =>
-                    c.toUpperCase()
-                  );
-
-                  const firstWeekday = first.getDay();
-                  const prevMonthLastDate = new Date(m.year, m.month, 0).getDate();
-                  const cells: unknown[] = [];
-
-                  for (let i = 0; i < 42; i++) {
-                    const dayNum = i - firstWeekday + 1;
-
-                    let displayNum: number;
-                    let cellDate: Date;
-                    let isCurrentMonth = true;
-
-                    if (dayNum < 1) {
-                      displayNum = prevMonthLastDate + dayNum;
-                      cellDate = new Date(m.year, m.month - 1, displayNum);
-                      isCurrentMonth = false;
-                    } else if (dayNum > daysInMonth) {
-                      displayNum = dayNum - daysInMonth;
-                      cellDate = new Date(m.year, m.month + 1, displayNum);
-                      isCurrentMonth = false;
-                    } else {
-                      displayNum = dayNum;
-                      cellDate = new Date(m.year, m.month, displayNum);
-                    }
-
-                    let diaStyle = [styles.dia, styles.diaFora];
-
-                    if (isCurrentMonth) {
-                      const worked = isWorkedDay(cellDate);
-                      const isHoliday = props.feriados.some((f) => f.date === format(cellDate, "yyyy-MM-dd"));
-                      const isRecesso = props.recessos.some((r) => r.date === format(cellDate, "yyyy-MM-dd"));
-
-                      if (worked) diaStyle = [styles.dia, styles.diaTrabalhado];
-                      else if (isHoliday) diaStyle = [styles.dia, styles.diaFeriado];
-                      else if (isRecesso) diaStyle = [styles.dia, styles.diaRecesso];
-                      else diaStyle = [styles.dia, styles.diaFora];
-                    } else {
-                      diaStyle = [styles.dia, styles.diaFora];
-                    }
-
-                    cells.push(
-                      <View key={`${m.year}-${m.month}-cell-${i}`} style={diaStyle}>
-                        <Text>{displayNum}</Text>
-                      </View>,
-                    );
-                  }
-
-                  const rows: React.ReactNode[] = [];
-                  const totalCellsNeeded = firstWeekday + daysInMonth;
-                  const rowsCount = Math.ceil(totalCellsNeeded / 7);
-                  for (let r = 0; r < rowsCount; r++) {
-                    const rowCells = cells.slice(r * 7, r * 7 + 7) as React.ReactNode[];
-                    rows.push(
-                      <View key={`${m.year}-${m.month}-row-${r}`} style={{ flexDirection: "row" }}>
-                        {rowCells}
-                      </View>,
-                    );
-                  }
-
-                  return (
-                    <View key={`${m.year}-${m.month}`} style={styles.calendarioMes}>
-                      <Text style={styles.mesTitulo}>{monthName}</Text>
-                      <View style={styles.diasSemana}>
-                        <Text style={styles.diaHeader}>D</Text>
-                        <Text style={styles.diaHeader}>S</Text>
-                        <Text style={styles.diaHeader}>T</Text>
-                        <Text style={styles.diaHeader}>Q</Text>
-                        <Text style={styles.diaHeader}>Q</Text>
-                        <Text style={styles.diaHeader}>S</Text>
-                        <Text style={styles.diaHeader}>S</Text>
-                      </View>
-                      <View>{rows}</View>
-                    </View>
-                  );
+              );
+            })}
+            <View
+              style={[
+                styles.tableRow,
+                { fontWeight: 700, backgroundColor: "#f9f9f9" },
+              ]}
+            >
+              <Text style={{ width: "40%" }}>TOTAL</Text>
+              <Text style={{ width: "20%", textAlign: "center" }}>
+                {totalPassagensNoAno}
+              </Text>
+              <Text style={{ width: "20%", textAlign: "center" }}></Text>
+              <Text style={{ width: "20%", textAlign: "right" }}>
+                {props.preco.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
                 })}
-              </View>
+              </Text>
+            </View>
+          </View>
+        </View>
 
-              {/* Legenda */}
-              <View style={styles.legenda}>
-                <View style={styles.legendaItem}>
-                  <View style={[styles.legendaCor, { backgroundColor: "#fde68a" }]} />
-                  <Text>Trabalhado</Text>
+        {/* Calendário */}
+        <View style={styles.calendarioContainer}>
+          <Text style={[styles.cardTitle, { fontSize: 12 }]}>Calendário</Text>
+          <View style={styles.calendarioGrid}>
+            {months.map((m) => {
+              const first = new Date(m.year, m.month, 1);
+              const last = new Date(m.year, m.month + 1, 0);
+              const daysInMonth = last.getDate();
+              const monthName = format(first, "MMMM yyyy", {
+                locale: ptBR,
+              }).replace(/^\w/, (c) => c.toUpperCase());
+
+              const firstWeekday = first.getDay();
+              const prevMonthLastDate = new Date(m.year, m.month, 0).getDate();
+              const cells: unknown[] = [];
+
+              for (let i = 0; i < 42; i++) {
+                const dayNum = i - firstWeekday + 1;
+
+                let displayNum: number;
+                let cellDate: Date;
+                let isCurrentMonth = true;
+
+                if (dayNum < 1) {
+                  displayNum = prevMonthLastDate + dayNum;
+                  cellDate = new Date(m.year, m.month - 1, displayNum);
+                  isCurrentMonth = false;
+                } else if (dayNum > daysInMonth) {
+                  displayNum = dayNum - daysInMonth;
+                  cellDate = new Date(m.year, m.month + 1, displayNum);
+                  isCurrentMonth = false;
+                } else {
+                  displayNum = dayNum;
+                  cellDate = new Date(m.year, m.month, displayNum);
+                }
+
+                let diaStyle = [styles.dia, styles.diaFora];
+
+                if (isCurrentMonth) {
+                  const worked = isWorkedDay(cellDate);
+                  const isHoliday = props.feriados.some(
+                    (f) => f.date === format(cellDate, "yyyy-MM-dd"),
+                  );
+                  const isRecesso = props.recessos.some(
+                    (r) => r.date === format(cellDate, "yyyy-MM-dd"),
+                  );
+
+                  if (worked) diaStyle = [styles.dia, styles.diaTrabalhado];
+                  else if (isHoliday)
+                    diaStyle = [styles.dia, styles.diaFeriado];
+                  else if (isRecesso)
+                    diaStyle = [styles.dia, styles.diaRecesso];
+                  else diaStyle = [styles.dia, styles.diaFora];
+                } else {
+                  diaStyle = [styles.dia, styles.diaFora];
+                }
+
+                cells.push(
+                  <View key={`${m.year}-${m.month}-cell-${i}`} style={diaStyle}>
+                    <Text>{displayNum}</Text>
+                  </View>,
+                );
+              }
+
+              const rows: React.ReactNode[] = [];
+              const totalCellsNeeded = firstWeekday + daysInMonth;
+              const rowsCount = Math.ceil(totalCellsNeeded / 7);
+              for (let r = 0; r < rowsCount; r++) {
+                const rowCells = cells.slice(
+                  r * 7,
+                  r * 7 + 7,
+                ) as React.ReactNode[];
+                rows.push(
+                  <View
+                    key={`${m.year}-${m.month}-row-${r}`}
+                    style={{ flexDirection: "row" }}
+                  >
+                    {rowCells}
+                  </View>,
+                );
+              }
+
+              return (
+                <View key={`${m.year}-${m.month}`} style={styles.calendarioMes}>
+                  <Text style={styles.mesTitulo}>{monthName}</Text>
+                  <View style={styles.diasSemana}>
+                    <Text style={styles.diaHeader}>D</Text>
+                    <Text style={styles.diaHeader}>S</Text>
+                    <Text style={styles.diaHeader}>T</Text>
+                    <Text style={styles.diaHeader}>Q</Text>
+                    <Text style={styles.diaHeader}>Q</Text>
+                    <Text style={styles.diaHeader}>S</Text>
+                    <Text style={styles.diaHeader}>S</Text>
+                  </View>
+                  <View>{rows}</View>
                 </View>
-                <View style={styles.legendaItem}>
-                  <View style={[styles.legendaCor, { backgroundColor: "#fecaca" }]} />
-                  <Text>Feriado</Text>
-                </View>
-                {/* <View style={styles.legendaItem}>
+              );
+            })}
+          </View>
+
+          {/* Legenda */}
+          <View style={styles.legenda}>
+            <View style={styles.legendaItem}>
+              <View
+                style={[styles.legendaCor, { backgroundColor: "#fde68a" }]}
+              />
+              <Text>Trabalhado</Text>
+            </View>
+            <View style={styles.legendaItem}>
+              <View
+                style={[styles.legendaCor, { backgroundColor: "#fecaca" }]}
+              />
+              <Text>Feriado</Text>
+            </View>
+            {/* <View style={styles.legendaItem}>
                   <View style={[styles.legendaCor, { backgroundColor: "#c7f9cc" }]} />
                   <Text>Recesso</Text>
                 </View> */}
-                <View style={styles.legendaItem}>
-                  <View style={[styles.legendaCor, { backgroundColor: "#f8fafc" }]} />
-                  <Text>Fora do período</Text>
-                </View>
-              </View>
+            <View style={styles.legendaItem}>
+              <View
+                style={[styles.legendaCor, { backgroundColor: "#f8fafc" }]}
+              />
+              <Text>Fora do período</Text>
             </View>
+          </View>
+        </View>
 
-            {/* Informações do Boleto */}
-            {/* <View style={styles.infoBoleto}>
+        {/* Informações do Boleto */}
+        {/* <View style={styles.infoBoleto}>
               <View style={styles.infoLeft}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Vencimento</Text>
@@ -614,37 +703,13 @@ export default function BoletoTransportePDF(props: BoletoTransportePDFProps) {
               </View>
             </View> */}
 
-            {/* Rodapé */}
-            <Text style={styles.rodape}>
-              Documento gerado automaticamente em {format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss")} · Calculadora de
-              Transporte Docente
-            </Text>
-          </Page>
-        </Document>
-      ).toBlob();
-
-      // Download do PDF
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `boleto-transporte-${format(props.inicio, "dd-MM-yyyy")}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    };
-
-    generatePDF();
-  }, [
-    props.inicio,
-    props.fim,
-    props.totalDias,
-    props.diasContados,
-    props.feriadosContados,
-    props.preco,
-    JSON.stringify(props.transportes || []),
-    JSON.stringify(props.feriados || []),
-    JSON.stringify(props.recessos || []),
-    JSON.stringify(props.week || {}),
-  ]);
-
-  return null;
+        {/* Rodapé */}
+        <Text style={styles.rodape}>
+          Documento gerado automaticamente em{" "}
+          {format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss")} · Calculadora de
+          Transporte Docente
+        </Text>
+      </Page>
+    </Document>
+  );
 }
