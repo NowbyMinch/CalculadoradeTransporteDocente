@@ -2,12 +2,15 @@
 import { Calendar, CalendarRecesso, DatePicker } from "@/components/DatePicker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { BusFront, ChevronDown, TrainFront, TramFront, X } from "lucide-react";
+import { BusFront, ChevronDown, TrainFront, TramFront, X, FileText, BarChart3, Printer } from "lucide-react";
 import ValidationPopup from "@/components/ValidationPopup";
+import dynamic from "next/dynamic";
 import { NumericFormat } from "react-number-format";
 import { useFeriados } from "@/contexts/FeriadosContext";
 import Image from "next/image";
 import { getMonth } from "date-fns";
+
+const BoletoTransportePDF = dynamic(() => import("@/components/BoletoTransportePDF"), { ssr: false });
 
 const days = [
   "domingo",
@@ -60,6 +63,8 @@ export default function Home() {
   const [recessos, setRecessos] = useState<Array<Feriado>>([]);
   const [verMais, setVerMais] = useState(false);
   const [adicionarRecesso, setAdicionarRecesso] = useState(false);
+  const [mostrarBoleto, setMostrarBoleto] = useState(false);
+  const boletoRef = useRef<HTMLDivElement>(null);
   const [range, setRange] = useState(0);
   const [horaAula, setHoraAula] = useState("0");
   const [recessoNome, setRecessoNome] = useState<string>("");
@@ -446,7 +451,7 @@ export default function Home() {
                   </div>
 
                   <div className="w-46 max-w-full">
-                    <label className="text-[15px]">Fim (opicional)</label>
+                    <label className="text-[15px]">Fim (Opcional)</label>
                     <div className="sm:flex hidden w-full">
                       <DatePicker
                         onChange={setRecessoDataFinal}
@@ -881,7 +886,7 @@ export default function Home() {
               </div>
 
               <div className="flex gap-7 w-full h-full max-xl:flex-col ">
-                <div className="lg:min-w-110  h-full min-h-64 flex flex-col justify-between rounded-2xl gap-3">
+                <div className="lg:min-w-110  h-full min-h-60 flex flex-col justify-between rounded-2xl gap-3">
                   {/* <motion.button
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.03 }}
@@ -894,16 +899,10 @@ export default function Home() {
                   </motion.button> */}
 
                   <Calendar onChange={() => {}} />
-                  <div className="">
-                    {/* <button>a</button>
-                    <button>b</button>
-                    <button>c</button> */}
-                  </div>
-                  {/* <div className="w-full h-10 "></div> */}
                 </div>
 
-                <div className="flex flex-col gap-2 w-full ">
-                  <label className="text-[rgba(26,26,26,1)] text-[18px] font-black">
+                <div className="flex flex-col gap-2 w-full lg:-mt-11">
+                  <label className="text-[rgba(26,26,26,1)] text-[18px]">
                     Feriados:
                   </label>
 
@@ -943,21 +942,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  <motion.button
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => setAdicionarRecesso(true)}
-                    className="w-full max-w-120 bg-[#F4F4F4] border border-[#0000002E] p-2 rounded-xl cursor-pointer "
-                  >
-                    + Adicionar novo recesso
-                  </motion.button>
-                  {/* <div className="flex w-full max-w-120 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3  flex-col justify-center  p-5 ">
-                    <span className="line-clamp-2 self-center ">
-                      Recessos não oficiais para cálculo mais preciso.
-                    </span>
-                  </div> */}
-
                   {algumFeriado && feriadosNoPeriodo.length > 3 && (
                     <div className="flex justify-center mt-2">
                       <motion.button
@@ -967,23 +951,100 @@ export default function Home() {
                         onClick={() => {
                           setVerMais(true);
                         }}
-                        className="cursor-pointer font-semibold self-center mt-1 "
-                      >
-                        ver mais
+                      
+                        className="cursor-pointer self-center mt-1 text-sm">
+                        Ver todos os feriados e recessos ({feriadosNoPeriodo.length})
                       </motion.button>
                     </div>
                   )}
-                </div>
-              </div>
-              {/* 
-              <label className="text-[rgba(26,26,26,1)] text-[18px] font-black mt-2">
+
+              <label className="text-[rgba(26,26,26,1)] text-[18px] mt-2">
                 Recessos:
               </label>
-               */}
+              
+                  <motion.button
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setAdicionarRecesso(true)}
+                    className="w-full max-w-120 bg-[#F4F4F4] border border-[#0000002E] p-2 rounded-xl cursor-pointer "
+                  >
+                    + Adicionar recesso
+                  </motion.button>
+                  {/* <div className="flex w-full max-w-120 border border-[rgba(0,0,0,0.21)] rounded-2xl items-center gap-3  flex-col justify-center  p-5 ">
+                    <span className="line-clamp-2 self-center ">
+                      Recessos não oficiais para cálculo mais preciso.
+                    </span>
+                  </div> */}
+                </div>
+              </div>
+              {ativos > 0 && (
+                <div className="flex gap-3 flex-wrap justify-center">
+                    <motion.button
+                      initial={{ scale: 1 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setMostrarBoleto(true)}
+                      className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
+                    >
+                      <FileText className="size-5" />
+                      Exportar em PDF
+                    </motion.button>
+                    <motion.button
+                      initial={{ scale: 1 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
+                    >
+                      <BarChart3 className="size-5" />
+                      Exportar em CSV
+                    </motion.button>
+                    <motion.button
+                      initial={{ scale: 1 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex items-center gap-2 py-3 px-5 cursor-pointer rounded-2xl bg-[#ffd045] text-black font-medium"
+                    >
+                      <Printer className="size-5" />
+                      Imprimir como PDF
+                    </motion.button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+      {mostrarBoleto && inicio && fim && (
+        <div ref={boletoRef} style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+          <BoletoTransportePDF
+            inicio={inicio}
+            fim={fim}
+            totalDias={totalDias}
+            diasContados={diasContados}
+            feriadosContados={feriadosContados}
+            preco={preco}
+            transportes={
+              [bus, train, tram]
+                .map((_, i) => {
+                  if (i === 0 && bus)
+                    return { name: "Ônibus", passagens: passagens[0] || 0, valor: valores[0] || "R$ 0,00" };
+                  if (i === 1 && train) return { name: "Trem", passagens: passagens[bus ? 1 : 0] || 0, valor: valores[bus ? 1 : 0] || "R$ 0,00" };
+                  if (i === 2 && tram)
+                    return {
+                      name: "Metrô",
+                      passagens: passagens[bus && train ? 2 : train ? 1 : 0] || 0,
+                      valor: valores[bus && train ? 2 : train ? 1 : 0] || "R$ 0,00",
+                    };
+                  return null;
+                })
+                .filter((t) => t !== null) as Array<{ name: string; passagens: number; valor: string }>
+            }
+            feriados={feriados}
+            recessos={recessos}
+            week={week}
+          />
+        </div>
+      )}
       <ValidationPopup
         visible={alertVisible}
         message={alertMessage}
